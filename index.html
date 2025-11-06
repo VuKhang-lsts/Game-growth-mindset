@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flappy Dog</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <canvas id="game" width="1500" height="700" aria-label="Flappy Dog"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div id="score">0</div>
+      <div id="best">Best: 0</div>
+      <div id="player">👤 Player</div>
+      <div id="lives" title="Mạng">❤❤❤</div>
+      <div id="qstats">Đúng: 0 | Sai: 0</div>
+      <div id="timer">⏳</div>
+      <div id="msg">Nhấn Space / Click để bắt đầu</div>
+
+      <!-- Nút xem lại giới thiệu -->
+      <button id="helpBtn" class="btn-ghost" title="Xem lại phần giới thiệu">Giới thiệu</button>
+
+      <!-- Banner câu hỏi -->
+      <div id="qbanner" aria-live="polite"></div>
+
+      <!-- Toast chúc mừng / nhắc sai -->
+      <div id="toast" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- MÀN HÌNH GIỚI THIỆU -->
+  <dialog id="intro">
+    <h1 class="intro-title">FLAPPY MR.GOLD</h1>
+    <p class="intro-sub">
+      Mục tiêu: luyện <strong>tư duy phát triển</strong> qua trải nghiệm chơi – suy nghĩ – phản hồi.
+    </p>
+
+    <div class="intro-box">
+      <h2>Tình huống & vai trò</h2>
+      <p>Bạn là <strong>Mr. Gold (Cậu Vàng)</strong>, cố gắng vượt qua thử thách để
+      <strong>không bị các anh trộm chó chạy Exciter bắt</strong>.</p>
+    </div>
+
+    <div class="intro-box">
+      <h2>Kiến thức Growth Mindset</h2>
+      <ul class="intro-list">
+        <li>Hiểu <em>growth mindset</em>: năng lực có thể phát triển nhờ nỗ lực, chiến lược, phản hồi.</li>
+        <li>Phân biệt với <em>fixed mindset</em>: xem năng lực là cố định.</li>
+        <li>Thực hành xử lý tình huống học đường và chọn phản ứng phù hợp.</li>
+      </ul>
+    </div>
+
+    <div class="intro-grid">
+      <label>
+        Tên người chơi
+        <input id="playerName" type="text" maxlength="20" placeholder="Nhập tên của bạn" autofocus />
+      </label>
+
+      <label>
+        Chọn giống chó / trang phục
+        <select id="dogStyle">
+          <option value="photo">Mr. Gold (ảnh)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="intro-box">
+      
+      <section id="rules" role="region" aria-labelledby="rulesHeading" style="margin:12px 0 0;">
+  <h3 id="rulesHeading" style="margin:0 0 6px; font:700 16px/1.3 system-ui, Arial; color:#08357e;">
+    Thể lệ &amp; cách chơi
+  </h3>
+  <ul style="margin:0 0 8px 18px; padding:0; font:500 14px/1.5 system-ui, Arial;">
+    <li><strong>Mục tiêu:</strong> Điều khiển <em>Mr. Gold</em> vượt ống và hoàn thành <strong>20 câu hỏi Growth Mindset</strong>.</li>
+    <li><strong>Điều khiển:</strong> Nhấp chuột hoặc nhấn <kbd>Space</kbd> để bay lên.</li>
+    <li><strong>Nhịp chơi:</strong> Mỗi câu có <strong>10 giây</strong> để đọc &amp; định vị đáp án (xương <b>A/B</b>); sau khi trả lời xong, có <strong>5 giây</strong> chờ sang màn tiếp theo.</li>
+    <li><strong>Tính điểm:</strong> Câu 1–5: <b>±1đ</b> • 6–10: <b>±2đ</b> • 11–15: <b>±3đ</b> • 16–20: <b>±4đ</b>.</li>
+    <li><strong>Mạng (HP):</strong> Bắt đầu <b>3 mạng</b>. Tim <b>❤️</b> xuất hiện <em>giữa 2 ống</em> (mỗi màn 1 tim) → <b>+1 mạng</b>, tối đa <b>20 mạng</b>.</li>
+    <li><strong>Vật phẩm trong khoảng trống 10s/5s:</strong> <span aria-label="Tô phở">🍜</span> <b>+1 mạng</b>, <span aria-label="Cục shit">💩</span> <b>-1 mạng</b></li>
+    <li><strong>Câu hỏi &amp; trả lời:</strong> Chạm vào khúc xương mang nhãn A hoặc B để chọn; bỏ lỡ xem như <b>sai</b>.</li>
+    <li><strong>Kết thúc:</strong> Hết mạng ⇒ <b>Game Over</b>. Điểm cao nhất (Best) được lưu trên thiết bị.</li>
+  </ul>
+
+  <!-- (Tùy chọn) Gợi ý nhanh dạng mở/đóng để nội dung gọn gàng -->
+  <details style="font:500 13px/1.5 system-ui, Arial; color:#0b3d91;">
+    <summary>Mẹo nhanh</summary>
+    <ul style="margin:6px 0 0 18px;">
+      <li>Ưu tiên đọc câu hỏi sớm rồi căn đường bay tới xương đáp án.</li>
+      <li>Khi thấy 🍜/🧪 trong khoảng trống, chọn lộ trình an toàn trước khi sang màn.</li>
+      <li>Đừng bỏ qua tim ❤️ giữa hai ống — đó là mạng “bảo hiểm”.</li>
+    </ul>
+  </details>
+</section>
+
+    </div>
+<p id="creditLine" style="margin:8px 0 0; font: 600 14px/1.3 system-ui, Arial; color:#08357e;">
+  Người thực hiện: Thầy Vũ Khang (ICT) – Trường THCS &amp; THPT Đinh Thiện Lý (LSTS)
+</p>
+
+    <button id="startBtn" class="btn-primary">Chạy ngay thôi, exciter tới</button>
+  </dialog>
+
+  <script type="module" src="game.js"></script>
+
+  <dialog id="win" style="max-width:720px;border:none;border-radius:12px;padding:16px 20px;box-shadow:0 10px 40px rgba(0,0,0,.35)">
+  <header style="text-align:center;margin-bottom:8px">
+    <h2 style="margin:0 0 4px;font:800 22px/1.2 system-ui,Arial;color:#0b3d91">🎉 CHÚC MỪNG!</h2>
+    <p style="margin:0;font:600 14px/1.5 system-ui,Arial">Bạn đã thoát khỏi <b>anh Exciter</b> và hoàn thành 20 câu hỏi!</p>
+  </header>
+
+  <section id="winSummary" style="font:500 14px/1.6 system-ui,Arial;margin:8px 0 10px">
+    <!-- JS sẽ điền: tên, điểm, đúng/sai, mạng còn lại -->
+  </section>
+
+  <section aria-labelledby="gmHead" style="background:#f6fbff;border:1px solid #e0f0ff;border-radius:10px;padding:10px 12px">
+    <h3 id="gmHead" style="margin:0 0 6px;font:700 15px/1.3 system-ui,Arial;color:#08357e">Đúc kết Growth Mindset</h3>
+    <ul id="gmList" style="margin:0 0 0 18px;padding:0">
+      <li>Thêm chữ <b>“chưa”</b> (power of yet) – thất bại là điểm xuất phát để tiếp tục học.</li>
+      <li><b>Sai lầm = dữ liệu học</b>: xem lại, điều chỉnh chiến lược, thử lại.</li>
+      <li><b>Khen quá trình gắn với tiến bộ</b>: nỗ lực + chiến lược + xin trợ giúp + dùng phản hồi.</li>
+      <li><b>Chọn thử thách</b>, kiên trì và đổi chiến thuật khi cần (không bỏ cuộc).</li>
+      <li><b>Nạo bộ có thể phát triển</b> (neuroplasticity) — rèn luyện giúp năng lực tăng dần.</li>
+    </ul>
+  </section>
+
+  <form method="dialog" style="text-align:center;margin-top:12px">
+    <button id="winRestart" style="padding:10px 16px;border-radius:10px;border:none;background:#0b3d91;color:#fff;font:700 14px system-ui,Arial;cursor:pointer">
+      🔁 Chơi lại
+    </button>
+  </form>
+</dialog>
+
+</body>
+</html>
