@@ -119,8 +119,8 @@ const BONE_SCALE = 3;  // HỆ SỐ PHÓNG KHÚC XƯƠNG (1.0 = như cũ; 1.3 = 
 // Q&A timing
 const QUESTION_EVERY = 3;
 const MAX_QUESTIONS = 20;
-const QUESTION_LEAD_MS = 10000;          // 10s đọc Q&A
-const AFTER_QUESTION_DELAY_MS = 5000;    // 5s nghỉ
+const QUESTION_LEAD_MS = 3000;          // 10s đọc Q&A
+const AFTER_QUESTION_DELAY_MS = 500;    // 5s nghỉ
 const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
 // Tim giữa 2 ống
@@ -778,4 +778,5 @@ requestAnimationFrame(loop);
 winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
+
 });
