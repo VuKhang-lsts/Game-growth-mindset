@@ -111,7 +111,7 @@ const SPAWN_MS = 2100;
 const INVINCIBLE_MS = 1000;
 
 const START_LIVES = 3;
-const MAX_LIVES_CAP = 40;
+const MAX_LIVES_CAP = 5;
 
 const BONE_R = 14;        // bán kính dùng cho va chạm
 const BONE_SCALE = 3;  // HỆ SỐ PHÓNG KHÚC XƯƠNG (1.0 = như cũ; 1.3 = to hơn 30%)
@@ -125,7 +125,7 @@ const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
 // Tim giữa 2 ống
 const HEART_R = 12;
-const HEARTS_TOTAL = 5;
+const HEARTS_TOTAL = 20;
 const MIN_HEART_GAP_X = 160;
 
 // Vật phẩm trong khoảng trống (🍜 / 🧪) — giảm số lượng
@@ -381,7 +381,7 @@ class QItem {
 }
 
 /* ===================== HELPERS ===================== */
-function updateLivesHUD(){ livesEl.textContent = (lives <= 6) ? "❤".repeat(lives) : `❤×${lives}`; }
+function updateLivesHUD(){ livesEl.textContent = "❤".repeat(lives); }
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
 function showQBanner(t){ qbanner.style.display="block"; qbanner.textContent=t; }
 function hideQBanner(){ qbanner.style.display="none"; }
@@ -671,7 +671,7 @@ function checkQItemCollisions(){
       it.hit = true;
       if (it.type === "pho"){
         if (lives < MAX_LIVES_CAP){ lives += 1; updateLivesHUD(); showToast("🍜 +1 mạng", true); }
-        else showToast("Đã đạt tối đa 20 mạng", true);
+        else showToast(`Đã đạt tối đa ${MAX_LIVES_CAP} mạng`, true);
       } else {
         showToast("💩 -1 mạng", false);
         loseLife();
@@ -692,7 +692,7 @@ function checkHeartCollisions(){
     if (dx*dx + dy*dy <= (dog.r + h.r)*(dog.r + h.r) && !h.hit){
       h.hit = true;
       if (lives < MAX_LIVES_CAP){ lives += 1; updateLivesHUD(); showToast("Đã nhặt tim! +1 mạng ❤️", true); }
-      else showToast("Đã đạt tối đa 20 mạng", true);
+      else showToast(`Đã đạt tối đa ${MAX_LIVES_CAP} mạng`, true);
     }
   }
   hearts = hearts.filter(h => !h.hit);
@@ -846,6 +846,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
