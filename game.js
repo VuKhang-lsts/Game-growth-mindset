@@ -197,8 +197,9 @@ const DOG_STYLES = {
 let currentSkin = "shiba";
 let playerName  = "Player";
 
-/* ===================== QUESTIONS DATA (gốc) ===================== */
-const QUESTIONS_SRC = [
+/* ===================== QUESTIONS DATA (pool 60) ===================== */
+const QUESTIONS_POOL = [
+  // 1–20 (các câu hiện có, giữ nguyên nội dung – đáp án đúng mặc định: A)
   { q:"Growth mindset là gì?", a:"Năng lực phát triển", b:"Năng lực cố định", correct:"A" },
   { q:"Khi làm sai, nên…", a:"Xem sai như dữ liệu học", b:"Tránh né, đổ lỗi", correct:"A" },
   { q:"Điểm thấp →", a:"Phân tích lỗi, điều chỉnh", b:"Kết luận mình dở", correct:"A" },
@@ -219,7 +220,52 @@ const QUESTIONS_SRC = [
   { q:"Bị từ chối →", a:"Rút kinh nghiệm, thử lại", b:"Không thử nữa", correct:"A" },
   { q:"Nhóm sai →", a:"Cùng kiểm tra giả thuyết", b:"Đổ lỗi cá nhân", correct:"A" },
   { q:"Động lực bền vững:", a:"Nội tại + mục tiêu rõ", b:"Chỉ phần thưởng", correct:"A" },
+
+  // 21–60 (bổ sung)
+  { q:"Cải thiện kỹ năng tốt nhất bằng…", a:"Luyện tập có chủ đích", b:"Chờ cảm hứng", correct:"A" },
+  { q:"Khi bị phê bình công khai:", a:"Tách bản thân khỏi lỗi", b:"Tự ái rồi bỏ", correct:"A" },
+  { q:"Chọn lớp khó hơn →", a:"Cơ hội học nhanh hơn", b:"Rủi ro nên né", correct:"A" },
+  { q:"Vấp lần 1:", a:"Đổi chiến lược", b:"Làm y chang", correct:"A" },
+  { q:"Ghi chép học tập:", a:"Theo tuần/retro", b:"Không cần", correct:"A" },
+  { q:"Thiếu động lực:", a:"Nhớ mục tiêu nội tại", b:"Bỏ qua mục tiêu", correct:"A" },
+  { q:"Sai lầm của bạn học:", a:"Cùng mổ xẻ để học", b:"Cười chê", correct:"A" },
+  { q:"Thầy/cô góp ý:", a:"Hỏi lại cho rõ", b:"Phớt lờ", correct:"A" },
+  { q:"Đặt mục tiêu SMART:", a:"Cụ thể, đo được", b:"Mơ hồ", correct:"A" },
+  { q:"Tài liệu khó hiểu:", a:"Tìm ví dụ/diễn giải", b:"Bỏ qua đoạn đó", correct:"A" },
+  { q:"Ôn tập hiệu quả:", a:"Câu hỏi tự kiểm tra", b:"Chỉ đọc lướt", correct:"A" },
+  { q:"Khi so sánh điểm:", a:"Rút kinh nghiệm", b:"Tự ti/buông xuôi", correct:"A" },
+  { q:"Thiếu thời gian:", a:"Ưu tiên & chia nhỏ", b:"Làm ngẫu hứng", correct:"A" },
+  { q:"Thử thách mới:", a:"Chấp nhận và học", b:"Tránh để an toàn", correct:"A" },
+  { q:"Lỗi lặp lại:", a:"Tìm nguyên nhân gốc", b:"Đổ cho xui", correct:"A" },
+  { q:"Học nhóm:", a:"Vai trò & mục tiêu rõ", b:"Tuỳ hứng", correct:"A" },
+  { q:"Tài nguyên online:", a:"Dùng có chọn lọc", b:"Tin mọi thứ", correct:"A" },
+  { q:"Não có thể phát triển:", a:"Có, nhờ rèn luyện", b:"Không, cố định", correct:"A" },
+  { q:"Chán nản tạm thời:", a:"Nghỉ ngắn rồi quay lại", b:"Bỏ hẳn", correct:"A" },
+  { q:"Sai khác gian lận:", a:"Sai để học", b:"Sai là xấu hổ", correct:"A" },
+  { q:"Đối mặt lo âu thi cử:", a:"Chuẩn bị + thực hành", b:"Cầu may", correct:"A" },
+  { q:"Không hiểu bài giảng:", a:"Hỏi & xem lại", b:"Giấu dốt", correct:"A" },
+  { q:"Lịch học dài hạn:", a:"Tạo thói quen", b:"Nước tới chân mới nhảy", correct:"A" },
+  { q:"Ôn tập cuối kỳ:", a:"Bắt sớm, từng bước", b:"Nước rút 1 đêm", correct:"A" },
+  { q:"Sử dụng phản hồi bạn bè:", a:"Chọn phần hữu ích", b:"Bỏ qua hết", correct:"A" },
+  { q:"Khi được khen thông minh:", a:"Chuyển sang khen nỗ lực", b:"Tự mãn", correct:"A" },
+  { q:"Đặt câu hỏi trên lớp:", a:"Giúp mình & bạn", b:"Sợ mắc cỡ", correct:"A" },
+  { q:"Kỹ năng mới:", a:"Học từ cơ bản", b:"Nhảy ngay phần khó", correct:"A" },
+  { q:"Nhịp tiến bộ:", a:"So với chính mình", b:"Phải hơn tất cả", correct:"A" },
+  { q:"Thất bại liên tiếp:", a:"Điều chỉnh kế hoạch", b:"Bỏ cuộc", correct:"A" },
+  { q:"Đổi chiến lược học:", a:"Khi dữ liệu báo xấu", b:"Cố chấp giữ cũ", correct:"A" },
+  { q:"Nhận biết ‘fixed mindset’:", a:"Tự bắt lỗi suy nghĩ", b:"Phớt lờ", correct:"A" },
+  { q:"Quên bài:", a:"Cách quãng (spaced)", b:"Nhồi 1 lần", correct:"A" },
+  { q:"Tự giám sát tiến độ:", a:"Checklists, tracker", b:"Để trí nhớ lo", correct:"A" },
+  { q:"Câu hỏi tư duy:", a:"Vì sao? Như thế nào?", b:"Thôi khỏi hỏi", correct:"A" },
+  { q:"Thiếu tự tin:", a:"Chuẩn bị + thử nhỏ", b:"Không dám làm", correct:"A" },
+  { q:"Sai do chủ quan:", a:"Đổi thói quen xấu", b:"Đổ cho đề khó", correct:"A" },
+  { q:"Nhìn nhận năng lực:", a:"Có thể phát triển", b:"Số phận an bài", correct:"A" },
+  { q:"Đào sâu khái niệm:", a:"Ví dụ/đối ví dụ", b:"Học thuộc vẹt", correct:"A" },
+  { q:"Mất tập trung:", a:"Kỹ thuật Pomodoro", b:"Vừa học vừa lướt", correct:"A" },
+  { q:"Tự thưởng:", a:"Sau cột mốc nhỏ", b:"Không cần kỷ luật", correct:"A" },
+  { q:"Bài khó quá sức:", a:"Xin trợ giúp", b:"Giấu bài", correct:"A" },
 ];
+
 
 /* ===================== ENTITIES ===================== */
 class Dog {
@@ -354,10 +400,30 @@ function nearestPipeAhead(){
 function canSpawnPipes(nowMs){ return !questionActive && !questionPending && nowMs >= afterQuestionUntil; }
 function shuffleArray(arr){ for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 function prepareQuestions(){
-  const pattern = Array(10).fill("A").concat(Array(10).fill("B"));
-  shuffleArray(pattern);
-  QUESTIONS_RT = QUESTIONS_SRC.map((q, idx) => pattern[idx]!==q.correct ? ({ q:q.q, a:q.b, b:q.a, correct:"B" }) : ({...q}));
+  // 1) xáo trộn toàn bộ pool
+  const pool = [...QUESTIONS_POOL];
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+
+  // 2) chọn ra đúng số lượng dùng trong một ván (mặc định theo MAX_QUESTIONS = 20)
+  const selected = pool.slice(0, MAX_QUESTIONS);
+
+  // 3) tạo pattern đảo A/B (xấp xỉ nửa số câu bị đảo → cân bằng)
+  const flips = Array(selected.length).fill(false).map((_,i)=> i < Math.floor(selected.length/2));
+  for (let i = flips.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [flips[i], flips[j]] = [flips[j], flips[i]]; }
+
+  // 4) áp dụng pattern: nếu flip thì hoán đổi A/B và cập nhật "correct"
+  QUESTIONS_RT = selected.map((q, idx) => {
+    if (!flips[idx]) return { ...q }; // giữ nguyên
+    // đảo phương án
+    return {
+      q: q.q,
+      a: q.b,
+      b: q.a,
+      correct: q.correct === "A" ? "B" : "A"
+    };
+  });
 }
+
 function randJitter(base, pct){ const d = base * pct; return base + (Math.random()*2-1)*d; }
 
 /* ===================== CORE ===================== */
@@ -780,4 +846,5 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
