@@ -110,7 +110,7 @@ const PIPE_SPEED = 2.4;
 const SPAWN_MS = 2100;
 const INVINCIBLE_MS = 1000;
 
-const START_LIVES = 10;
+const START_LIVES = 3;
 const MAX_LIVES_CAP = 40;
 
 const BONE_R = 14;        // bán kính dùng cho va chạm
@@ -125,7 +125,7 @@ const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
 // Tim giữa 2 ống
 const HEART_R = 12;
-const HEARTS_TOTAL = 20;
+const HEARTS_TOTAL = 5;
 const MIN_HEART_GAP_X = 160;
 
 // Vật phẩm trong khoảng trống (🍜 / 🧪) — giảm số lượng
@@ -846,5 +846,6 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
