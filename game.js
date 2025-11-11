@@ -381,7 +381,12 @@ class QItem {
 }
 
 /* ===================== HELPERS ===================== */
-function updateLivesHUD(){ livesEl.textContent = (lives <= MAX_LIVES_CAP) ? "❤".repeat(lives) : ❤×${lives}`; }
+function updateLivesHUD(){
+   // Vì trần = 10 nên luôn hiển thị được dạng tim lặp
+   livesEl.textContent = "❤".repeat(lives);
+   // Nếu muốn phòng khi đổi trần trong tương lai:
+   // livesEl.textContent = (lives <= MAX_LIVES_CAP) ? "❤".repeat(lives) : `❤×${lives}`;
+ }
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
 function showQBanner(t){ qbanner.style.display="block"; qbanner.textContent=t; }
 function hideQBanner(){ qbanner.style.display="none"; }
@@ -846,6 +851,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
