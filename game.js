@@ -381,7 +381,7 @@ class QItem {
 }
 
 /* ===================== HELPERS ===================== */
-function updateLivesHUD(){ livesEl.textContent = (lives <= 6) ? "❤".repeat(lives) : `❤×${lives}`; }
+function updateLivesHUD(){ livesEl.textContent = (lives <= MAX_LIVES_CAP) ? "❤".repeat(lives) : \❤×${lives}`; }
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
 function showQBanner(t){ qbanner.style.display="block"; qbanner.textContent=t; }
 function hideQBanner(){ qbanner.style.display="none"; }
@@ -846,6 +846,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
