@@ -110,8 +110,8 @@ const PIPE_SPEED = 2.4;
 const SPAWN_MS = 2100;
 const INVINCIBLE_MS = 1000;
 
-const START_LIVES = 3;
-const MAX_LIVES_CAP = 5;
+const START_LIVES = 5;
+const MAX_LIVES_CAP = 10;
 
 const BONE_R = 14;        // bán kính dùng cho va chạm
 const BONE_SCALE = 3;  // HỆ SỐ PHÓNG KHÚC XƯƠNG (1.0 = như cũ; 1.3 = to hơn 30%)
@@ -381,7 +381,7 @@ class QItem {
 }
 
 /* ===================== HELPERS ===================== */
-function updateLivesHUD(){ livesEl.textContent = "❤".repeat(lives); }
+function updateLivesHUD(){ livesEl.textContent = (lives <= 6) ? "❤".repeat(lives) : `❤×${lives}`; }
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
 function showQBanner(t){ qbanner.style.display="block"; qbanner.textContent=t; }
 function hideQBanner(){ qbanner.style.display="none"; }
@@ -846,6 +846,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
