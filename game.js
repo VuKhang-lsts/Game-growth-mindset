@@ -468,7 +468,7 @@ function randJitter(base, pct){ const d = base * pct; return base + (Math.random
 
 /* ===================== CORE ===================== */
 function reset(){
-  dog = new Dog(80, canvas.height/2);
+  dog = new Dog(80, BASE_H/2);
   pipes = []; bones = []; hearts = []; qItems = [];
   score = 0; spawnTimer = 0; lastTs = 0;
   lives = START_LIVES; invincibleUntil = 0;
@@ -499,9 +499,9 @@ exciterCY = (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52);
 }
 
 function spawnPipe(){
-  const minTop=50, maxTop=canvas.height - PIPE_GAP - 100;
+  const minTop=50, maxTop=BASE_H - PIPE_GAP - 100;
   const top = minTop + Math.random()*(maxTop-minTop);
-  const p = { x: canvas.width, top, gap: PIPE_GAP, w: PIPE_W, scored:false };
+  const p = { x: BASE_W, top, gap: PIPE_GAP, w: PIPE_W, scored:false };
   pipes.push(p);
 
   // Tim giữa 2 ống: ghép cặp
@@ -515,7 +515,7 @@ function spawnPipe(){
       const gapWidth = gapEnd - gapStart;
       if (gapWidth >= MIN_HEART_GAP_X){
         const midX = gapStart + gapWidth/2;
-        const y = 80 + Math.random()*(canvas.height - 160);
+        const y = 80 + Math.random()*(BASE_H - 160);
         hearts.push(new Heart(midX, y));
         heartSpawnedForStage[heartPendingStage-1] = true;
         heartPendingStage = null;
@@ -536,13 +536,13 @@ function drawPipes(){
   pipes.forEach(p=>{
     ctx.fillRect(p.x,0,p.w,p.top);
     const bottomY = p.top + p.gap;
-    ctx.fillRect(p.x,bottomY,p.w,canvas.height-bottomY);
+    ctx.fillRect(p.x,bottomY,p.w,BASE_H-bottomY);
   });
 }
 
 function collided(){
   if (performance.now() < invincibleUntil) return false;
-  if (dog.y - dog.r <= 0 || dog.y + dog.r >= canvas.height) return true;
+  if (dog.y - dog.r <= 0 || dog.y + dog.r >= BASE_H) return true;
   for (const p of pipes){
     const inX = dog.x + dog.r > p.x && dog.x - dog.r < p.x + p.w;
     const inGap = dog.y - dog.r >= p.top && dog.y + dog.r <= p.top + p.gap;
@@ -566,7 +566,7 @@ function updateScore(nowMs){
 function loseLife(){
   if (lives > 1){
     lives -= 1; updateLivesHUD();
-    dog.y = canvas.height/2; dog.vy = 0;
+    dog.y = BASE_H/2; dog.vy = 0;
     invincibleUntil = performance.now() + INVINCIBLE_MS;
     pipes = pipes.filter(p=>p.x + p.w >= dog.x - 10);
     msgEl.textContent = "Cố lên! -1 mạng • Tiếp tục!";
@@ -616,8 +616,8 @@ function spawnQuestion(nowMs){
   showQBanner(`Câu ${idx}/${MAX_QUESTIONS} (±${pts}đ): ${Q.q} — A) ${Q.a}  B) ${Q.b}`);
 
   const distancePx = SPEED_PX_PER_MS * QUESTION_LEAD_MS;
-  const targetX = Math.max(canvas.width + 100, dog.x + distancePx + 40);
-  const yMid = canvas.height/2;
+  const targetX = Math.max(BASE_W + 100, dog.x + distancePx + 40);
+  const yMid = BASE_H/2;
   const delta = Math.round(70 * Math.max(1, BONE_SCALE));
   bones = [
     new Bone(targetX, yMid - delta, "A", Q.correct === "A"),
@@ -690,13 +690,13 @@ function maybeSpawnQItems(nowMs){
   }
 
   // Sinh "cặp" cùng lúc: 1 🍜 + 1 🧪, lệch Y tối thiểu QITEM_Y_GAP
-  const y1 = QITEM_MIN_Y + Math.random()*(canvas.height - QITEM_MIN_Y*2);
-  let y2 = QITEM_MIN_Y + Math.random()*(canvas.height - QITEM_MIN_Y*2);
+  const y1 = QITEM_MIN_Y + Math.random()*(BASE_H - QITEM_MIN_Y*2);
+  let y2 = QITEM_MIN_Y + Math.random()*(BASE_H - QITEM_MIN_Y*2);
   if (Math.abs(y2 - y1) < QITEM_Y_GAP){
     y2 = y1 + (y2 < y1 ? -QITEM_Y_GAP : QITEM_Y_GAP);
     y2 = Math.max(QITEM_MIN_Y, Math.min(canvas.height - QITEM_MIN_Y, y2));
   }
-  const x = canvas.width + 60;
+  const x = BASE_W + 60;
   qItems.push(new QItem(x, y1, "pho"));
   qItems.push(new QItem(x + 28, y2, "chem"));
 }
@@ -742,7 +742,7 @@ function checkHeartCollisions(){
 function drawBackground(){
   if (bgReady){
     // "cover" toàn bộ canvas (giữ tỉ lệ, không méo ảnh)
-    const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+    const scale = Math.max(BASE_W / bgImg.width, BASE_H / bgImg.height);
     const w = bgImg.width  * scale;
     const h = bgImg.height * scale;
 
@@ -751,13 +751,13 @@ function drawBackground(){
     let startX = bgScrollX % w;                           // lặp lại theo chiều ngang
     if (startX > 0) startX -= w;
 
-    for (let x = startX; x < canvas.width; x += w){
+    for (let x = startX; x < BASE_W; x += w){
       ctx.drawImage(bgImg, 0, 0, bgImg.width, bgImg.height, x, 0, w, h);
     }
   } else {
     // fallback khi ảnh chưa sẵn sàng
     ctx.fillStyle = "#87CEEB";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, BASE_H-10, BASE_W, 10);
   }
 
   // đường mặt đất (giữ như cũ)
@@ -765,7 +765,7 @@ function drawBackground(){
   ctx.fillRect(0, canvas.height-10, canvas.width, 10);
 }
 
-function drawTitle(){ ctx.fillStyle="#08357e"; ctx.font="bold 28px system-ui, Arial"; ctx.textAlign="center"; ctx.fillText("FLAPPY MR.GOLD", canvas.width/2, 80); }
+function drawTitle(){ ctx.fillStyle="#08357e"; ctx.font="bold 28px system-ui, Arial"; ctx.textAlign="center"; ctx.fillText("FLAPPY MR.GOLD", BASE_W/2, 80); }
 function updateTimerUI(nowMs){
   if (questionActive){
     const left = Math.max(0, Math.ceil((questionCountdownUntil - nowMs)/1000));
@@ -886,6 +886,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
