@@ -1,6 +1,41 @@
 let lastDtForBg = 1;
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+/* ===== Responsive + HiDPI (vẽ theo toạ độ logic cố định) ===== */
+const BASE_W = Number(canvas.getAttribute("width"))  || 480;  // khung logic
+const BASE_H = Number(canvas.getAttribute("height")) || 720;
+
+function resizeCanvas(){
+  // kích thước nhìn thấy thực sự (ưu tiên visualViewport cho mobile)
+  const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
+  const vh = window.visualViewport?.height || Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+  // giữ tỉ lệ gốc (letterbox)
+  const aspect = BASE_W / BASE_H;
+  let displayW = vw, displayH = Math.round(vw / aspect);
+  if (displayH > vh) { displayH = vh; displayW = Math.round(vh * aspect); }
+
+  // HiDPI: framebuffer = kích thước hiển thị * DPR (giới hạn để đỡ nặng)
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+
+  canvas.style.width  = displayW + "px";
+  canvas.style.height = displayH + "px";
+  canvas.width  = Math.round(displayW * dpr);
+  canvas.height = Math.round(displayH * dpr);
+
+  // scale từ khung logic → framebuffer
+  const scale = (displayW / BASE_W) * dpr;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", resizeCanvas);
+new ResizeObserver(()=>resizeCanvas()).observe(document.documentElement);
+
+// chặn hành vi cuộn khi chạm canvas
+canvas.style.touchAction = "none";
+
 
 const winDlg       = document.getElementById("win");
 const winSummaryEl = document.getElementById("winSummary");
@@ -746,7 +781,7 @@ function loop(ts){
   lastDtForBg = dt;
   const nowMs = performance.now();
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,BASE_W,BASE_H);
   drawBackground();
 
   if (state === "playing" && questionPending){
@@ -851,6 +886,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
