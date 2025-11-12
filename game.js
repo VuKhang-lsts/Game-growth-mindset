@@ -835,12 +835,20 @@ function drawBackground(){
 
 function drawTitle(){ ctx.fillStyle="#08357e"; ctx.font="bold 28px system-ui, Arial"; ctx.textAlign="center"; ctx.fillText("FLAPPY MR.GOLD", canvas.width/2, 80); }
 function updateTimerUI(nowMs){
+  // Đang mở popup toàn màn hình → không đếm
   if (qModalOpen){ setTimerText(""); return; }
+
+  if (questionActive){
+    const left = Math.max(0, Math.ceil((questionCountdownUntil - nowMs)/1000));
+    setTimerText(`⏳ ${left}s`);
   } else if (nowMs < afterQuestionUntil && postCountdownUntil){
     const left = Math.max(0, Math.ceil((postCountdownUntil - nowMs)/1000));
     setTimerText(`Sang màn sau: ${left}s`);
-  } else setTimerText("");
+  } else {
+    setTimerText("");
+  }
 }
+
 function loop(ts){
   const dtMs = lastTs ? ts - lastTs : 16.67; lastTs = ts;
   const dt = dtMs / 16.67;
@@ -953,6 +961,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
