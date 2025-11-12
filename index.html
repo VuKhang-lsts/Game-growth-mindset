@@ -133,6 +133,43 @@
   </form>
 </dialog>
 
+  <!-- Popup Câu hỏi (full-screen) -->
+<dialog id="qModal" style="max-width:none;width:100vw;height:100vh;padding:0;border:0;background:rgba(0,0,0,.6)">
+  <div id="qModalCard" style="position:absolute;inset:0;margin:auto;width:min(900px,92vw);max-height:86vh;overflow:auto;
+       background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <h2 style="margin:0 0 6px;font:800 22px/1.2 system-ui">GROWTH MINDSET – Câu hỏi</h2>
+    <div id="qModalBody" style="font:500 16px/1.6 system-ui;color:#222"></div>
+    <div id="qModalChoices" style="margin-top:12px;font:600 16px system-ui;color:#0b3d91"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="qStartBtn" style="padding:10px 14px;border-radius:10px;border:0;background:#0b57d0;color:#fff;font-weight:700">
+        Bắt đầu
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Dialog thua cuộc (full-screen chia buồn) -->
+<dialog id="ripDlg" style="max-width:none;width:100vw;height:100vh;padding:0;border:0;background:rgba(0,0,0,.7)">
+  <div style="position:absolute;inset:0;margin:auto;width:min(880px,92vw);max-height:86vh;overflow:auto;
+       background:#111;color:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.4)">
+    <h2 style="margin:0 0 6px;font:800 24px/1.2 system-ui">😔 Cậu Mr.Gold đi rồi, Ông Giáo ơi…</h2>
+    <div id="ripSummary" style="opacity:.95"></div>
+    <h3 style="margin:16px 0 8px">Đúc kết nhanh về Growth Mindset</h3>
+    <ul style="margin:0 0 14px 18px;line-height:1.6">
+      <li>Thất bại là dữ liệu để học, KHÔNG phải nhãn mác bản thân.</li>
+      <li>Nỗ lực + chiến lược phù hợp quan trọng hơn “bẩm sinh”.</li>
+      <li>Phản hồi là nhiên liệu để tiến bộ, không phải công kích cá nhân.</li>
+      <li>Sai lần 1 → thử chiến lược khác; chia nhỏ mục tiêu và theo dõi tiến độ.</li>
+    </ul>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="ripRestart" style="padding:10px 14px;border-radius:10px;border:0;background:#00b894;color:#111;font-weight:800">
+        Chơi lại
+      </button>
+    </div>
+  </div>
+</dialog>
+
 </body>
 </html>
+
 
