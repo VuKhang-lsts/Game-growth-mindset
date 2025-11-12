@@ -182,6 +182,20 @@ const timerEl  = document.getElementById("timer");
 const toastEl  = document.getElementById("toast");
 const qstatsEl = document.getElementById("qstats");
 
+/* ===== QModal & RIP dialog ===== */
+const qModal       = document.getElementById("qModal");
+const qModalBody   = document.getElementById("qModalBody");
+const qModalChoices= document.getElementById("qModalChoices");
+const qStartBtn    = document.getElementById("qStartBtn");
+
+const ripDlg       = document.getElementById("ripDlg");
+const ripSummaryEl = document.getElementById("ripSummary");
+const ripRestart   = document.getElementById("ripRestart");
+
+let qModalOpen = false;
+let qModalGhost = null; // element giả để animate thu nhỏ về banner
+
+
 /* ===================== INTRO / FORM ===================== */
 const intro       = document.getElementById("intro");
 const startBtn    = document.getElementById("startBtn");
@@ -428,6 +442,78 @@ function prepareQuestions(){
     };
   });
 }
+function getNextQuestionPreview(){
+  const Q = QUESTIONS_RT[questionIndex % QUESTIONS_RT.length];
+  const idx = questionIndex + 1;
+  const pts = questionPointFor(idx);
+  return { Q, idx, pts };
+}
+
+function openQModal(){
+  qModalOpen = true;
+  // PAUSE game mềm: dùng state "paused", lưu resume
+  if (state === "playing"){ resumeState = "playing"; state = "paused"; }
+
+  const {Q, idx, pts} = getNextQuestionPreview();
+  // Nội dung câu hỏi dài/bối cảnh (nếu thầy đã bổ sung ‘ctx’ thì hiển thị; nếu không, dùng Q.q)
+  const ctxText = Q.ctx ? `<div style="margin-bottom:8px;color:#444">Tình huống: ${Q.ctx}</div>` : "";
+  qModalBody.innerHTML =
+    `${ctxText}<div><b>Câu ${idx}/${MAX_QUESTIONS}</b> (đúng/ sai: ±${pts}đ)</div><div style="margin-top:6px">${Q.q}</div>`;
+  qModalChoices.innerHTML = `<div>A) ${Q.a}</div><div>B) ${Q.b}</div>`;
+
+  if (qModal?.showModal) qModal.showModal(); else qModal?.setAttribute("open","");
+
+  // Ẩn banner trong lúc popup
+  hideQBanner();
+  setTimerText(""); // không đếm trong thời gian đọc (do đang pause)
+}
+
+function closeQModalAndStart(){
+  // Tạo "bản sao" khung popup để animate thu nhỏ về vị trí banner
+  if (qModalGhost) qModalGhost.remove();
+  qModalGhost = document.createElement("div");
+  const card = document.getElementById("qModalCard");
+  const rc = card.getBoundingClientRect();
+  Object.assign(qModalGhost.style, {
+    position: "fixed", left: rc.left+"px", top: rc.top+"px", width: rc.width+"px", height: rc.height+"px",
+    background: "#fff", borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,.3)", zIndex: 9999
+  });
+  document.body.appendChild(qModalGhost);
+
+  // Đóng dialog thật
+  if (qModal?.open) qModal.close(); else qModal?.removeAttribute("open");
+
+  // Tính vị trí banner đích
+  const br = qbanner.getBoundingClientRect();
+  const dur = 450; // ms
+  const t0 = performance.now();
+
+  function anim(t){
+    const p = Math.min(1, (t - t0)/dur);
+    const ease = 1 - Math.pow(1 - p, 3); // easeOutCubic
+    const nx = rc.left + (br.left - rc.left) * ease;
+    const ny = rc.top  + (br.top  - rc.top)  * ease;
+    const nw = rc.width + (br.width - rc.width) * ease;
+    const nh = rc.height + (br.height - rc.height) * ease;
+    Object.assign(qModalGhost.style, { left: nx+"px", top: ny+"px", width: nw+"px", height: nh+"px", borderRadius: (16 - 10*ease)+"px" });
+    if (p < 1) requestAnimationFrame(anim);
+    else {
+      qModalGhost.remove(); qModalGhost = null;
+      // Hiện banner & BẮT ĐẦU đếm 20s + spawn xương
+      const {Q, idx, pts} = getNextQuestionPreview();
+      showQBanner(`Câu ${idx}/${MAX_QUESTIONS} (±${pts}đ): ${Q.q} — A) ${Q.a}  B) ${Q.b}`);
+      // trở lại chơi
+      if (state === "paused"){ state = resumeState || "playing"; resumeState=null; }
+      // spawn câu hỏi ngay sau khi thu nhỏ xong
+      spawnQuestion(performance.now());
+      qModalOpen = false;
+    }
+  }
+  requestAnimationFrame(anim);
+}
+
+qStartBtn?.addEventListener("click", closeQModalAndStart);
+
 
 function randJitter(base, pct){ const d = base * pct; return base + (Math.random()*2-1)*d; }
 
@@ -564,7 +650,24 @@ function gameOver(){
   bestEl.textContent = `Best: ${best}`;
   msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
   hideQBanner(); setTimerText("");
+
+  // Hiển thị dialog chia buồn + tổng kết
+  const answered = correctCount + wrongCount;
+  const acc = answered ? Math.round((correctCount/answered)*100) : 0;
+  ripSummaryEl.innerHTML =
+    `<div><b>Người chơi:</b> ${playerName}</div>
+     <div><b>Điểm:</b> ${score} (Best: ${best})</div>
+     <div><b>Đúng/Sai:</b> ${correctCount} / ${wrongCount} — <b>Độ chính xác:</b> ${acc}%</div>
+     <div><b>Mạng ở cuối:</b> ${lives}</div>`;
+
+  if (ripDlg?.showModal) ripDlg.showModal();
+  else ripDlg?.setAttribute("open","");
 }
+ripRestart?.addEventListener("click", ()=>{
+  if (ripDlg?.open) ripDlg.close();
+  reset(); state = "ready";
+});
+
 
 /* ===================== QUESTIONS FLOW ===================== */
 function questionPointFor(n){ if (n<=5) return 1; if (n<=10) return 2; if (n<=15) return 3; return 4; }
@@ -732,9 +835,7 @@ function drawBackground(){
 
 function drawTitle(){ ctx.fillStyle="#08357e"; ctx.font="bold 28px system-ui, Arial"; ctx.textAlign="center"; ctx.fillText("FLAPPY MR.GOLD", canvas.width/2, 80); }
 function updateTimerUI(nowMs){
-  if (questionActive){
-    const left = Math.max(0, Math.ceil((questionCountdownUntil - nowMs)/1000));
-    setTimerText(`⏳ ${left}s`);
+  if (qModalOpen){ setTimerText(""); return; }
   } else if (nowMs < afterQuestionUntil && postCountdownUntil){
     const left = Math.max(0, Math.ceil((postCountdownUntil - nowMs)/1000));
     setTimerText(`Sang màn sau: ${left}s`);
@@ -749,9 +850,10 @@ function loop(ts){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBackground();
 
-  if (state === "playing" && questionPending){
-    const ahead = nearestPipeAhead(); if (!ahead) spawnQuestion(nowMs);
-  }
+  if (state === "playing" && questionPending && !qModalOpen)
+  {
+  openQModal();             // hiện popup & PAUSE
+}
 
   if (state === "intro" || state === "ready" || state === "paused"){
     dog.y = canvas.height/2 + Math.sin(ts/350)*8; dog.draw(); drawTitle();
@@ -851,6 +953,7 @@ winRestart?.addEventListener("click", ()=>{
   reset(); state = "ready";
 
 });
+
 
 
 
