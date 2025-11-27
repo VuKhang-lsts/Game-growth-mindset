@@ -32,7 +32,7 @@ function gameWin(){
 // === SPRITE: Mr. Gold ===
 const SPRITE_PATH = "assets/mrgold.png";  // đổi nếu thầy/cô để chỗ khác
 const spriteMrGold = new Image();
-spriteMrGold.decoding = "async";          // hint decode không chặn render (browser support: tốt)
+spriteMrGold.decoding = "async";          // hint decode không chặn render
 spriteMrGold.src = SPRITE_PATH;
 
 let spriteReady = false;
@@ -49,7 +49,7 @@ ctx.imageSmoothingEnabled = true;
 // === SPRITE: Exciter (overlay dính vào Mr. Gold) ===
 const EXCITER_PATH = "assets/exciter.png";
 const exciterImg = new Image();
-exciterImg.decoding = "async";      // gợi ý giải mã bất đồng bộ
+exciterImg.decoding = "async";
 exciterImg.src = EXCITER_PATH;
 
 let exciterReady = false;
@@ -85,7 +85,7 @@ let exciterT0   = 0;
 // === BACKGROUND ===
 const BG_PATH = "assets/bg.png";      // đổi nếu đặt nơi khác
 const bgImg = new Image();
-bgImg.decoding = "async";             // gợi ý decode bất đồng bộ
+bgImg.decoding = "async";
 bgImg.src = BG_PATH;
 
 let bgReady = false;
@@ -114,12 +114,13 @@ const START_LIVES = 5;
 const MAX_LIVES_CAP = 10;
 
 const BONE_R = 14;        // bán kính dùng cho va chạm
-const BONE_SCALE = 3;  // HỆ SỐ PHÓNG KHÚC XƯƠNG (1.0 = như cũ; 1.3 = to hơn 30%)
+const BONE_SCALE = 3;     // HỆ SỐ PHÓNG KHÚC XƯƠNG
 
 // Q&A timing
 const QUESTION_EVERY = 3;
 const MAX_QUESTIONS = 20;
-const QUESTION_LEAD_MS = 20000;          // 10s đọc Q&A
+// 20s đọc Q&A
+const QUESTION_LEAD_MS = 20000;          // 20s đọc Q&A
 const AFTER_QUESTION_DELAY_MS = 5000;    // 5s nghỉ
 const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
@@ -131,7 +132,7 @@ const MIN_HEART_GAP_X = 160;
 // Vật phẩm trong khoảng trống (🍜 / 🧪) — giảm số lượng
 const QITEM_R = 16;
 const ICON_FONT = 'bold 26px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
-const QITEM_Q_PHASE_MAX_PAIRS = 3;      // tối đa 3 cặp trong 10s
+const QITEM_Q_PHASE_MAX_PAIRS = 3;      // tối đa 3 cặp trong 20s
 const QITEM_GAP_PHASE_MAX_PAIRS = 2;    // tối đa 2 cặp trong 5s
 const QITEM_SPAWN_MS_BASE_Q = 1600;     // khoảng nền (có jitter)
 const QITEM_SPAWN_MS_BASE_GAP = 1200;
@@ -199,7 +200,7 @@ let playerName  = "Player";
 
 /* ===================== QUESTIONS DATA (pool 60) ===================== */
 const QUESTIONS_POOL = [
-  // 1–20 (các câu hiện có, giữ nguyên nội dung – đáp án đúng mặc định: A)
+  // 1–20 (giữ nguyên nội dung – đáp án đúng mặc định: A)
   { q:"Growth mindset là gì?", a:"Năng lực phát triển", b:"Năng lực cố định", correct:"A" },
   { q:"Khi làm sai, nên…", a:"Xem sai như dữ liệu học", b:"Tránh né, đổ lỗi", correct:"A" },
   { q:"Điểm thấp →", a:"Phân tích lỗi, điều chỉnh", b:"Kết luận mình dở", correct:"A" },
@@ -266,6 +267,71 @@ const QUESTIONS_POOL = [
   { q:"Bài khó quá sức:", a:"Xin trợ giúp", b:"Giấu bài", correct:"A" },
 ];
 
+/* ====== BỐI CẢNH CHO 60 CÂU (1-based) ====== */
+const QUESTION_CONTEXTS = {
+  1:"Sinh hoạt lớp – đặt mục tiêu học kỳ mới.",
+  2:"Sau khi nộp lab, bạn bị góp ý thiếu kiểm thử.",
+  3:"Điểm giữa kỳ thấp hơn kỳ vọng dù đã học chăm.",
+  4:"Gặp bài lập trình khó, bí ở bước phân tích đề.",
+  5:"Feedback thuyết trình: nội dung rườm rà, dài dòng.",
+  6:"Bạn tự nghĩ năng lực là ‘bẩm sinh’ nên nản.",
+  7:"Hackathon: lỗi dựng môi trường lặp lại nhiều lần.",
+  8:"GV nhấn mạnh: quá trình quan trọng không kém kết quả.",
+  9:"Bạn muốn tiến bộ nhưng thường bỏ qua việc soi lỗi cũ.",
+  10:"Trong nhóm có bạn rất giỏi, bạn mới làm quen.",
+  11:"Cận hạn nộp demo, còn nhiều đầu việc tồn.",
+  12:"Bạn thấy ‘chưa làm được’ bài tối ưu hoá.",
+  13:"Bài trắc nghiệm thiếu 1–2 ý mấu chốt.",
+  14:"Debug vội, ít đọc log và không ghi giả thuyết.",
+  15:"Bạn nhìn điểm nhiều hơn nhìn tiến bộ cá nhân.",
+  16:"Hội đồng phản biện thẳng thắn khiến bạn chạnh lòng.",
+  17:"Bạn hay so sánh với người khác rồi nản.",
+  18:"Ý tưởng startup bị loại ở vòng đầu.",
+  19:"Nhóm tranh cãi do hiểu sai yêu cầu.",
+  20:"Bạn muốn xây động lực học bền lâu.",
+  21:"Bạn tập một kỹ năng mới (nhạc cụ/kỹ thuật).",
+  22:"Bạn bị phê bình công khai trong buổi báo cáo.",
+  23:"Phân vân chọn lớp nâng cao khó hơn.",
+  24:"Bạn vấp lần đầu ở bài tập chương mới.",
+  25:"Bạn dự định duy trì sổ tay/retro hằng tuần.",
+  26:"Ôn thi dài hơi nhưng thiếu động lực.",
+  27:"Nhìn thấy lỗi của bạn học trong bài demo.",
+  28:"Thầy cô góp ý ngắn gọn, bạn chưa rõ ý.",
+  29:"Nhóm đang đặt mục tiêu cho đồ án học kỳ.",
+  30:"Đọc tài liệu học thuật khá khó hiểu.",
+  31:"Chuẩn bị cho kiểm tra chương tuần tới.",
+  32:"Xem lại bảng điểm sau bài kiểm tra.",
+  33:"Ít thời gian, nhiều môn cần ôn.",
+  34:"Bạn đăng ký thử thách hackathon mới.",
+  35:"Một lỗi code tái diễn nhiều lần.",
+  36:"Học nhóm nhưng dễ lan man.",
+  37:"Nguồn tài nguyên online quá nhiều, nhiễu.",
+  38:"Bạn đọc bài về tính dẻo của não bộ.",
+  39:"Học dài, thấy chán nản tạm thời.",
+  40:"Bạn phân vân giữa sai sót và gian lận.",
+  41:"Bạn bị lo âu trước kỳ thi.",
+  42:"Bạn không hiểu bài giảng hôm nay.",
+  43:"Bạn muốn lập lịch học dài hạn.",
+  44:"Gần đến mùa thi cuối kỳ.",
+  45:"Bạn nhận phản hồi từ bạn bè.",
+  46:"Bạn được khen ‘thông minh’.",
+  47:"Trong giờ, bạn phân vân có nên hỏi.",
+  48:"Bắt đầu học một kỹ năng mới.",
+  49:"Bạn muốn theo dõi tiến bộ cá nhân.",
+  50:"Thất bại vài lần liên tiếp.",
+  51:"Số liệu học tập cho thấy hiệu quả giảm.",
+  52:"Bạn nhận ra mình hay nghĩ ‘mình dở sẵn’.",
+  53:"Ôn xong nhưng mau quên kiến thức.",
+  54:"Bạn muốn tự theo dõi tiến độ học.",
+  55:"Bạn đang luyện đặt câu hỏi sâu.",
+  56:"Bạn thấy thiếu tự tin khi thuyết trình.",
+  57:"Sai sót do chủ quan, ỷ y.",
+  58:"Bạn tranh luận về ‘năng lực cố định’.",
+  59:"Bạn cần đào sâu một khái niệm khó.",
+  60:"Bạn dễ xao nhãng, muốn thử Pomodoro."
+};
+// Áp bối cảnh vào pool theo chỉ số 1-based
+QUESTIONS_POOL.forEach((q, i) => { const idx = i+1; if (QUESTION_CONTEXTS[idx]) q.ctx = QUESTION_CONTEXTS[idx]; });
 
 /* ===================== ENTITIES ===================== */
 class Dog {
@@ -274,23 +340,19 @@ class Dog {
   update(dt){ this.vy += GRAVITY * dt; this.y += this.vy * dt; }
 
   draw() {
-  const angle = Math.max(-0.6, Math.min(0.6, this.vy / 12));
-
-  ctx.save();
-  ctx.translate(this.x, this.y);
-  ctx.rotate(angle);
-  if (typeof spriteReady !== "undefined" && spriteReady) {
-    ctx.drawImage(spriteMrGold, -DOG_SPRITE_W/2, -DOG_SPRITE_H/2, DOG_SPRITE_W, DOG_SPRITE_H); // vẽ ảnh chó
-  } else {
-    // fallback vector
-    ctx.fillStyle = "#f4b400";
-    ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI*2); ctx.fill();
+    const angle = Math.max(-0.6, Math.min(0.6, this.vy / 12));
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(angle);
+    if (typeof spriteReady !== "undefined" && spriteReady) {
+      ctx.drawImage(spriteMrGold, -DOG_SPRITE_W/2, -DOG_SPRITE_H/2, DOG_SPRITE_W, DOG_SPRITE_H);
+    } else {
+      // fallback vector
+      ctx.fillStyle = "#f4b400";
+      ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
   }
-  ctx.restore();
-
-
-}
-
 }
 
 function drawExciter(nowMs){
@@ -375,7 +437,7 @@ class QItem {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const ch = (this.type==="pho") ? "🍜" : "💩";
-    // fillText hỗ trợ vẽ emoji (tuỳ nền tảng). MDN: CanvasRenderingContext2D.fillText()
+    // fillText hỗ trợ vẽ emoji (tuỳ nền tảng)
     ctx.fillText(ch, this.x, this.y);
   }
 }
@@ -386,9 +448,23 @@ function updateLivesHUD(){
    livesEl.textContent = "❤".repeat(lives);
    // Nếu muốn phòng khi đổi trần trong tương lai:
    // livesEl.textContent = (lives <= MAX_LIVES_CAP) ? "❤".repeat(lives) : `❤×${lives}`;
- }
+}
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
-function showQBanner(t){ qbanner.style.display="block"; qbanner.textContent=t; }
+
+// NEW: banner hỗ trợ bối cảnh
+function showQBanner(t, ctxText){
+  qbanner.style.display="block";
+  qbanner.style.whiteSpace="normal";
+  if (ctxText){
+    qbanner.innerHTML =
+      `<div>${t}</div>
+       <div style="font-size:.9em;opacity:.92;margin-top:4px">
+         <b>Tình huống:</b> ${ctxText}
+       </div>`;
+  } else {
+    qbanner.textContent = t;
+  }
+}
 function hideQBanner(){ qbanner.style.display="none"; }
 function showToast(t, good=true){
   toastEl.style.display="block";
@@ -409,22 +485,22 @@ function prepareQuestions(){
   const pool = [...QUESTIONS_POOL];
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
 
-  // 2) chọn ra đúng số lượng dùng trong một ván (mặc định theo MAX_QUESTIONS = 20)
+  // 2) chọn ra đúng số lượng dùng trong một ván (MAX_QUESTIONS = 20)
   const selected = pool.slice(0, MAX_QUESTIONS);
 
   // 3) tạo pattern đảo A/B (xấp xỉ nửa số câu bị đảo → cân bằng)
   const flips = Array(selected.length).fill(false).map((_,i)=> i < Math.floor(selected.length/2));
   for (let i = flips.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [flips[i], flips[j]] = [flips[j], flips[i]]; }
 
-  // 4) áp dụng pattern: nếu flip thì hoán đổi A/B và cập nhật "correct"
+  // 4) áp dụng pattern: nếu flip thì hoán đổi A/B và cập nhật "correct" — giữ nguyên bối cảnh ctx
   QUESTIONS_RT = selected.map((q, idx) => {
-    if (!flips[idx]) return { ...q }; // giữ nguyên
-    // đảo phương án
+    if (!flips[idx]) return { ...q }; // giữ nguyên (bao gồm cả q.ctx)
     return {
       q: q.q,
       a: q.b,
       b: q.a,
-      correct: q.correct === "A" ? "B" : "A"
+      correct: q.correct === "A" ? "B" : "A",
+      ctx: q.ctx
     };
   });
 }
@@ -451,16 +527,14 @@ function reset(){
   prepareQuestions();
 
   exciterMode = "followTop";
-exciterCX =  dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0);
-exciterCY = (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52);
+  exciterCX =  dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0);
+  exciterCY = (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52);
 
   scoreEl.textContent = score;
   best = Number(localStorage.getItem("flappyDogBest") || 0);
   bestEl.textContent = `Best: ${best}`;
   updateLivesHUD(); updateQStats(); setTimerText(""); hideQBanner();
   msgEl.textContent = "Nhấn Space / Click để bắt đầu";
-
-  
 }
 
 function spawnPipe(){
@@ -562,8 +636,8 @@ function gameOver(){
   best = Math.max(best, score);
   localStorage.setItem("flappyDogBest", best);
   bestEl.textContent = `Best: ${best}`;
-  msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
   hideQBanner(); setTimerText("");
+  msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
 }
 
 /* ===================== QUESTIONS FLOW ===================== */
@@ -578,7 +652,11 @@ function spawnQuestion(nowMs){
   const pts = questionPointFor(idx);
   questionCountdownUntil = nowMs + QUESTION_LEAD_MS;
 
-  showQBanner(`Câu ${idx}/${MAX_QUESTIONS} (±${pts}đ): ${Q.q} — A) ${Q.a}  B) ${Q.b}`);
+  // HIỂN THỊ kèm bối cảnh
+  showQBanner(
+    `Câu ${idx}/${MAX_QUESTIONS} (±${pts}đ): ${Q.q} — A) ${Q.a}  B) ${Q.b}`,
+    Q.ctx
+  );
 
   const distancePx = SPEED_PX_PER_MS * QUESTION_LEAD_MS;
   const targetX = Math.max(canvas.width + 100, dog.x + distancePx + 40);
@@ -602,18 +680,18 @@ function finishQuestion(nowMs, isCorrect){
   if (isCorrect){ correctCount += 1; score += pts; showToast(`Chính xác! +${pts}đ 🎉`, true); }
   else { wrongCount += 1; score -= pts; showToast(`Sai! -${pts}đ ❌`, false); loseLife(); }
   scoreEl.textContent = score; updateQStats();
-  
-  // ... sau khi cập nhật score, correctCount, wrongCount
-if (questionIndex >= MAX_QUESTIONS){
-  return gameWin();   // kết thúc ngay khi hoàn tất 20 câu
-}
+
+  // hoàn tất đủ 20 câu → thắng
+  if (questionIndex >= MAX_QUESTIONS){
+    return gameWin();
+  }
 
   questionActive = false; bones = []; hideQBanner();
   pipes = []; // dọn sạch cảnh
   afterQuestionUntil = nowMs + AFTER_QUESTION_DELAY_MS;
   postCountdownUntil = afterQuestionUntil;
 
-  // Bắt đầu phase GAP 5s → reset quota & lịch spawn đồ vật
+  // Phase GAP 5s → reset quota & lịch spawn đồ vật
   gapPairsSpawnedInPhase = 0;
   nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_GAP, QITEM_SPAWN_JITTER);
 
@@ -638,7 +716,7 @@ function checkBoneCollisions(nowMs){
   }
 }
 
-/* ===================== Q-ITEMS (🍜/🧪 trong 10s & 5s, ĐÃ GIẢM SỐ LƯỢNG) ===================== */
+/* ===================== Q-ITEMS (🍜/🧪 trong 20s & 5s, ĐÃ GIẢM SỐ LƯỢNG) ===================== */
 function itemsPhaseActive(nowMs){ return questionActive || nowMs < afterQuestionUntil; }
 function maybeSpawnQItems(nowMs){
   if (!itemsPhaseActive(nowMs)) return;
@@ -758,7 +836,7 @@ function loop(ts){
   } else if (state === "playing"){
     if (canSpawnPipes(nowMs)){ spawnTimer += dtMs; if (spawnTimer > SPAWN_MS){ spawnPipe(); spawnTimer = 0; } }
 
-    // Vật phẩm trong 10s/5s — đã giảm số lượng
+    // Vật phẩm trong 20s/5s — đã giảm số lượng
     maybeSpawnQItems(nowMs);
 
     dog.update(dt);
@@ -782,19 +860,19 @@ function loop(ts){
   } else if (state === "gameover"){
     drawPipes(); hearts.forEach(h=>h.draw()); qItems.forEach(it=>it.draw()); bones.forEach(b=>b.draw()); dog.draw();
   }  else if (state === "victory"){
-  // nền + nhân vật đứng yên
-  drawPipes();
-  hearts.forEach(h=>h.draw());
-  qItems.forEach(it=>it.draw());
-  bones.forEach(b=>b.draw());
-  dog.draw();
-}
+    // nền + nhân vật đứng yên
+    drawPipes();
+    hearts.forEach(h=>h.draw());
+    qItems.forEach(it=>it.draw());
+    bones.forEach(b=>b.draw());
+    dog.draw();
+  }
 
   updateTimerUI(nowMs);
   msgEl.style.opacity = state === "playing" ? 0 : 1;
   requestAnimationFrame(loop);
 
-   drawExciter(nowMs);
+  drawExciter(nowMs);
 }
 
 /* ===================== CONTROLS & INTRO ===================== */
@@ -845,9 +923,7 @@ reset();
 openIntro();
 requestAnimationFrame(loop);
 
-
 winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
-
 });
