@@ -94,22 +94,31 @@ let bgScrollX = 0;
 ctx.imageSmoothingEnabled = true;
 
 /* ===================== BGM: nhạc nền xuyên suốt ===================== */
-// Đặt file vào thư mục assets, giữ nguyên tên có dấu & ngoặc như thầy yêu cầu
-const MUSIC_FILE = "nhạc mèo oggy-remix[hưng hack].mp3";
-const bgm = new Audio("assets/" + encodeURIComponent(MUSIC_FILE));
-bgm.loop = true;           // lặp vô hạn
-bgm.preload = "auto";
-bgm.volume = 0.45;         // âm lượng nhẹ nhàng
-
-let bgmStarted = false;    // để chỉ play 1 lần sau tương tác đầu
-function startBgmOnce() {
-  if (bgmStarted) return;
-  bgmStarted = true;
-  bgm.play().catch(() => {
-    // nếu trình duyệt chặn (rất hiếm sau gesture), cho phép thử lại ở lần gesture kế tiếp
-    bgmStarted = false;
-  });
+const bgm = document.getElementById("bgm");
+if (bgm) {
+  bgm.volume = 0.5;  // chỉnh nhẹ cho đỡ át hiệu ứng
 }
+
+let bgmArmed = false;   // đã “kích hoạt” phát nhạc chưa (tránh gọi nhiều)
+function startBgm() {
+  if (!bgm || bgmArmed) return;
+  bgmArmed = true;
+  const tryPlay = () => bgm.play().catch(() => {
+    // nếu vẫn bị chặn, đợi tương tác kế tiếp rồi thử lại
+    bgmArmed = false;
+  });
+  tryPlay();
+}
+
+// bảo hiểm: phát nhạc ngay ở gesture đầu tiên trên trang
+window.addEventListener("pointerdown", startBgm, { once: true });
+window.addEventListener("keydown",     startBgm, { once: true });
+
+// (tùy chọn) log lỗi đường dẫn nếu có sự cố tải file
+bgm?.addEventListener("error", () => {
+  console.warn("Không tải được BGM. Kiểm tra đường dẫn hoặc tên file mp3.", bgm.error);
+});
+
 
 
 /* ===================== CONSTANTS ===================== */
@@ -913,30 +922,31 @@ function startGame(){
     if (intro?.open) intro.close();
     msgEl.textContent="";
     state="playing";
-    startBgmOnce();   // ⬅️ phát nhạc ngay khi bắt đầu chơi
+    startBgm();       // ⬅️ phát nhạc ngay khi bắt đầu
     dog.flap();
     return;
   }
   if (state === "ready"){
     msgEl.textContent="";
     state="playing";
-    startBgmOnce();   // ⬅️ đảm bảo nhạc chạy khi bắt đầu
+    startBgm();       // ⬅️ đảm bảo nhạc chạy khi bắt đầu
     dog.flap();
   }
   else if (state === "paused"){
     if (intro?.open) intro.close();
     state = resumeState || "playing";
     resumeState=null;
-    startBgmOnce();   // ⬅️ tiếp tục đảm bảo nhạc khi resume
+    startBgm();       // ⬅️ khi resume cũng gọi
   }
   else if (state === "gameover"){
     reset(); state="ready";
-    // Nhạc vẫn chạy xuyên suốt, không dừng.
+    // nhạc vẫn chạy xuyên suốt, không dừng
   }
   else if (state === "playing"){
-    dog.flap(); // chỉ vỗ cánh, không ảnh hưởng nhạc
+    dog.flap();
   }
 }
+
 
 window.addEventListener("keydown",(e)=>{
   if (isTypingInForm()) return;
@@ -977,6 +987,7 @@ winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
 });
+
 
 
 
