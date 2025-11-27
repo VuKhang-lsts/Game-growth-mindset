@@ -32,7 +32,7 @@ function gameWin(){
 // === SPRITE: Mr. Gold ===
 const SPRITE_PATH = "assets/mrgold.png";  // đổi nếu thầy/cô để chỗ khác
 const spriteMrGold = new Image();
-spriteMrGold.decoding = "async";          // hint decode không chặn render
+spriteMrGold.decoding = "async";          // hint decode không chặn render (browser support: tốt)
 spriteMrGold.src = SPRITE_PATH;
 
 let spriteReady = false;
@@ -49,7 +49,7 @@ ctx.imageSmoothingEnabled = true;
 // === SPRITE: Exciter (overlay dính vào Mr. Gold) ===
 const EXCITER_PATH = "assets/exciter.png";
 const exciterImg = new Image();
-exciterImg.decoding = "async";
+exciterImg.decoding = "async";      // gợi ý giải mã bất đồng bộ
 exciterImg.src = EXCITER_PATH;
 
 let exciterReady = false;
@@ -85,7 +85,7 @@ let exciterT0   = 0;
 // === BACKGROUND ===
 const BG_PATH = "assets/bg.png";      // đổi nếu đặt nơi khác
 const bgImg = new Image();
-bgImg.decoding = "async";
+bgImg.decoding = "async";             // gợi ý decode bất đồng bộ
 bgImg.src = BG_PATH;
 
 let bgReady = false;
@@ -114,13 +114,12 @@ const START_LIVES = 5;
 const MAX_LIVES_CAP = 10;
 
 const BONE_R = 14;        // bán kính dùng cho va chạm
-const BONE_SCALE = 3;     // HỆ SỐ PHÓNG KHÚC XƯƠNG
+const BONE_SCALE = 3;  // HỆ SỐ PHÓNG KHÚC XƯƠNG (1.0 = như cũ; 1.3 = to hơn 30%)
 
 // Q&A timing
 const QUESTION_EVERY = 3;
 const MAX_QUESTIONS = 20;
-// 20s đọc Q&A
-const QUESTION_LEAD_MS = 20000;          // 20s đọc Q&A
+const QUESTION_LEAD_MS = 20000;          // 20s đọc Q&A (hiển thị bối cảnh + câu hỏi)
 const AFTER_QUESTION_DELAY_MS = 5000;    // 5s nghỉ
 const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
@@ -200,7 +199,7 @@ let playerName  = "Player";
 
 /* ===================== QUESTIONS DATA (pool 60) ===================== */
 const QUESTIONS_POOL = [
-  // 1–20 (giữ nguyên nội dung – đáp án đúng mặc định: A)
+  // 1–20 (các câu hiện có, giữ nguyên nội dung – đáp án đúng mặc định: A)
   { q:"Growth mindset là gì?", a:"Năng lực phát triển", b:"Năng lực cố định", correct:"A" },
   { q:"Khi làm sai, nên…", a:"Xem sai như dữ liệu học", b:"Tránh né, đổ lỗi", correct:"A" },
   { q:"Điểm thấp →", a:"Phân tích lỗi, điều chỉnh", b:"Kết luận mình dở", correct:"A" },
@@ -330,8 +329,8 @@ const QUESTION_CONTEXTS = {
   59:"Bạn cần đào sâu một khái niệm khó.",
   60:"Bạn dễ xao nhãng, muốn thử Pomodoro."
 };
-// Áp bối cảnh vào pool theo chỉ số 1-based
-QUESTIONS_POOL.forEach((q, i) => { const idx = i+1; if (QUESTION_CONTEXTS[idx]) q.ctx = QUESTION_CONTEXTS[idx]; });
+// gắn bối cảnh vào pool theo chỉ số 1-based
+QUESTIONS_POOL.forEach((q, i) => { q.ctx = QUESTION_CONTEXTS[i+1] || ""; });
 
 /* ===================== ENTITIES ===================== */
 class Dog {
@@ -345,7 +344,7 @@ class Dog {
     ctx.translate(this.x, this.y);
     ctx.rotate(angle);
     if (typeof spriteReady !== "undefined" && spriteReady) {
-      ctx.drawImage(spriteMrGold, -DOG_SPRITE_W/2, -DOG_SPRITE_H/2, DOG_SPRITE_W, DOG_SPRITE_H);
+      ctx.drawImage(spriteMrGold, -DOG_SPRITE_W/2, -DOG_SPRITE_H/2, DOG_SPRITE_W, DOG_SPRITE_H); // vẽ ảnh chó
     } else {
       // fallback vector
       ctx.fillStyle = "#f4b400";
@@ -437,7 +436,7 @@ class QItem {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const ch = (this.type==="pho") ? "🍜" : "💩";
-    // fillText hỗ trợ vẽ emoji (tuỳ nền tảng)
+    // fillText hỗ trợ vẽ emoji (tuỳ nền tảng). MDN: CanvasRenderingContext2D.fillText()
     ctx.fillText(ch, this.x, this.y);
   }
 }
@@ -451,18 +450,18 @@ function updateLivesHUD(){
 }
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
 
-// NEW: banner hỗ trợ bối cảnh
-function showQBanner(t, ctxText){
+// sửa: banner hỗ trợ bối cảnh (hiển thị bối cảnh TRƯỚC, câu hỏi SAU)
+function showQBanner(questionText, ctxText){
   qbanner.style.display="block";
   qbanner.style.whiteSpace="normal";
   if (ctxText){
     qbanner.innerHTML =
-      `<div>${t}</div>
-       <div style="font-size:.9em;opacity:.92;margin-top:4px">
+      `<div style="font-size:.95em;opacity:.95;margin-bottom:6px">
          <b>Tình huống:</b> ${ctxText}
-       </div>`;
+       </div>
+       <div>${questionText}</div>`;
   } else {
-    qbanner.textContent = t;
+    qbanner.textContent = questionText;
   }
 }
 function hideQBanner(){ qbanner.style.display="none"; }
@@ -485,16 +484,17 @@ function prepareQuestions(){
   const pool = [...QUESTIONS_POOL];
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
 
-  // 2) chọn ra đúng số lượng dùng trong một ván (MAX_QUESTIONS = 20)
+  // 2) chọn ra đúng số lượng dùng trong một ván (mặc định theo MAX_QUESTIONS = 20)
   const selected = pool.slice(0, MAX_QUESTIONS);
 
   // 3) tạo pattern đảo A/B (xấp xỉ nửa số câu bị đảo → cân bằng)
   const flips = Array(selected.length).fill(false).map((_,i)=> i < Math.floor(selected.length/2));
   for (let i = flips.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [flips[i], flips[j]] = [flips[j], flips[i]]; }
 
-  // 4) áp dụng pattern: nếu flip thì hoán đổi A/B và cập nhật "correct" — giữ nguyên bối cảnh ctx
+  // 4) áp dụng pattern: nếu flip thì hoán đổi A/B và cập nhật "correct" (GIỮ ctx)
   QUESTIONS_RT = selected.map((q, idx) => {
-    if (!flips[idx]) return { ...q }; // giữ nguyên (bao gồm cả q.ctx)
+    if (!flips[idx]) return { ...q }; // giữ nguyên cả q.ctx
+    // đảo phương án
     return {
       q: q.q,
       a: q.b,
@@ -636,8 +636,8 @@ function gameOver(){
   best = Math.max(best, score);
   localStorage.setItem("flappyDogBest", best);
   bestEl.textContent = `Best: ${best}`;
-  hideQBanner(); setTimerText("");
   msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
+  hideQBanner(); setTimerText("");
 }
 
 /* ===================== QUESTIONS FLOW ===================== */
@@ -652,7 +652,7 @@ function spawnQuestion(nowMs){
   const pts = questionPointFor(idx);
   questionCountdownUntil = nowMs + QUESTION_LEAD_MS;
 
-  // HIỂN THỊ kèm bối cảnh
+  // HIỂN THỊ: tình huống trước, rồi câu hỏi + phương án
   showQBanner(
     `Câu ${idx}/${MAX_QUESTIONS} (±${pts}đ): ${Q.q} — A) ${Q.a}  B) ${Q.b}`,
     Q.ctx
@@ -681,9 +681,9 @@ function finishQuestion(nowMs, isCorrect){
   else { wrongCount += 1; score -= pts; showToast(`Sai! -${pts}đ ❌`, false); loseLife(); }
   scoreEl.textContent = score; updateQStats();
 
-  // hoàn tất đủ 20 câu → thắng
+  // đủ 20 câu → thắng
   if (questionIndex >= MAX_QUESTIONS){
-    return gameWin();
+    return gameWin();   // kết thúc ngay khi hoàn tất 20 câu
   }
 
   questionActive = false; bones = []; hideQBanner();
@@ -691,7 +691,7 @@ function finishQuestion(nowMs, isCorrect){
   afterQuestionUntil = nowMs + AFTER_QUESTION_DELAY_MS;
   postCountdownUntil = afterQuestionUntil;
 
-  // Phase GAP 5s → reset quota & lịch spawn đồ vật
+  // Bắt đầu phase GAP 5s → reset quota & lịch spawn đồ vật
   gapPairsSpawnedInPhase = 0;
   nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_GAP, QITEM_SPAWN_JITTER);
 
@@ -922,6 +922,7 @@ playerEl.textContent = `👤 ${playerName}`;
 reset();
 openIntro();
 requestAnimationFrame(loop);
+
 
 winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
