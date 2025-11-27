@@ -1,68 +1,33 @@
+/* ===================== BOOTSTRAP & GLOBALS ===================== */
 let lastDtForBg = 1;
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// HUD / Dialog refs
 const winDlg       = document.getElementById("win");
 const winSummaryEl = document.getElementById("winSummary");
 const winRestart   = document.getElementById("winRestart");
 let state = "intro";   // "intro" | "ready" | "playing" | "paused" | "victory" | "gameover"
 
-/* ===================== GROWTH RECAP ===================== */
-const GROWTH_TIPS = [
-  "Sai = dữ liệu học; ghi lại, tìm nguyên nhân gốc và sửa ở lần sau.",
-  "Nói: “Chưa làm được… CHƯA” để mở cánh cửa tiến bộ.",
-  "Tập trung vào quá trình: đặt mục tiêu nhỏ + đo tiến độ từng bước.",
-  "Thử chiến lược mới khi dữ liệu báo xấu, đừng cố chấp.",
-  "Xin phản hồi cụ thể, chọn phần hữu ích để áp dụng ngay.",
-  "So sánh với chính mình của hôm qua, không phải với người khác.",
-  "Luyện tập có chủ đích: mục tiêu rõ, phản hồi nhanh, lặp lại có chủ tâm.",
-  "Ôn theo khoảng cách (spaced repetition) thay vì nhồi nhét một đêm.",
-  "Dùng checklist/Pomodoro để tự giám sát sự tập trung.",
-  "Chấp nhận thách thức; lỗi là bậc thang để giỏi hơn."
-];
-function pickRandomTips(n=6){
-  const arr = [...GROWTH_TIPS];
-  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
-  return arr.slice(0, n);
-}
-function showRecapDialog(outcome){
-  const answered = correctCount + wrongCount;
-  const acc = answered ? Math.round((correctCount/answered)*100) : 0;
-  const tips = pickRandomTips(6).map(t=>`<li>${escapeHTML(t)}</li>`).join("");
+const scoreEl  = document.getElementById("score");
+const bestEl   = document.getElementById("best");
+const msgEl    = document.getElementById("msg");
+const livesEl  = document.getElementById("lives");
+const playerEl = document.getElementById("player");
+const qbanner  = document.getElementById("qbanner");
+const helpBtn  = document.getElementById("helpBtn");
+const timerEl  = document.getElementById("timer");
+const toastEl  = document.getElementById("toast");
+const qstatsEl = document.getElementById("qstats");
 
-  const lastQs = askedQuestions.slice(-3).map(q =>
-    `<li style="margin-bottom:6px">${formatMultiline(q.q)}<br><small>Đáp án đúng: <b>${q.correct}</b> — A) ${escapeHTML(q.a)} • B) ${escapeHTML(q.b)}</small></li>`
-  ).join("");
+/* ===================== INTRO FORM ===================== */
+const intro       = document.getElementById("intro");
+const startBtn    = document.getElementById("startBtn");
+const playerNameI = document.getElementById("playerName");
+const dogStyleI   = document.getElementById("dogStyle");
+let playerName    = "Player";
 
-  const title = outcome === "victory" ? "🏆 Hoàn thành!" : "💡 Bài học sau thất bại";
-  winSummaryEl.innerHTML =
-    `<h3 style="margin:0 0 8px">${title}</h3>
-     <div><b>Người chơi:</b> ${escapeHTML(playerName)}</div>
-     <div><b>Điểm:</b> ${score}</div>
-     <div><b>Đúng/Sai:</b> ${correctCount} / ${wrongCount} (Độ chính xác: ${acc}%)</div>
-     <div><b>Mạng còn lại:</b> ${lives}</div>
-     <hr>
-     <div><b>Đúc kết Growth Mindset</b></div>
-     <ul style="margin:6px 0 10px 18px">${tips}</ul>
-     <details>
-       <summary><b>Xem lại 3 câu gần nhất đã gặp</b></summary>
-       <ul style="margin:6px 0 0 18px">${lastQs || "<li>(Chưa có câu hỏi nào)</li>"}</ul>
-     </details>`;
-
-  if (winDlg?.showModal) winDlg.showModal();
-  else winDlg?.setAttribute("open","");
-}
-
-function gameWin(){
-  state = "victory";
-  hideQBanner(); setTimerText("");
-  // dừng spawn & dọn bớt vật thể
-  pipes = []; bones = []; qItems = [];
-  dog.vy = 0;
-  showRecapDialog("victory");
-}
-
-/* === SPRITE: Mr. Gold === */
+/* ===================== SPRITES ===================== */
 const SPRITE_PATH = "assets/mrgold.png";
 const spriteMrGold = new Image();
 spriteMrGold.decoding = "async";
@@ -75,9 +40,10 @@ if (spriteMrGold.decode) {
 } else {
   spriteMrGold.onload = () => spriteReady = true;
 }
+
 ctx.imageSmoothingEnabled = true;
 
-/* === SPRITE: Exciter (overlay dính vào Mr. Gold) === */
+/* === EXCITER (overlay) === */
 const EXCITER_PATH = "assets/exciter.png";
 const exciterImg = new Image();
 exciterImg.decoding = "async";
@@ -97,20 +63,19 @@ const EXCITER_TOP_SCALE = 1.15;
 const EXCITER_TOP_Y = 65;
 const EXCITER_TOP_OFFSET_X = 0;
 
-/* === CẮT CẢNH GAME OVER: EXCITER LAO XUỐNG CHÓ === */
 const DOG_SPRITE_W = 110;
 const DOG_SPRITE_H = 62;
 
 const EXCITER_ATTACK_MS = 1500;
 const EXCITER_ATTACK_EASE = t => 1 - Math.pow(1 - t, 3);
 
-let exciterMode = "followTop";    // "followTop" | "attack"
+let exciterMode = "followTop"; // "followTop" | "attack"
 let exciterCX = 0, exciterCY = 0;
 let exciterFrom = { x: 0, y: 0 };
 let exciterTo   = { x: 0, y: 0 };
 let exciterT0   = 0;
 
-/* === BACKGROUND === */
+/* ===================== BACKGROUND ===================== */
 const BG_PATH = "assets/bg.png";
 const bgImg = new Image();
 bgImg.decoding = "async";
@@ -124,7 +89,6 @@ if (bgImg.decode) {
   bgImg.onload = () => bgReady = true;
 }
 
-// Parallax
 const BG_SCROLL_SPEED = 1.2;
 let bgScrollX = 0;
 ctx.imageSmoothingEnabled = true;
@@ -147,23 +111,23 @@ const BONE_SCALE = 3;
 // Q&A timing
 const QUESTION_EVERY = 3;
 const MAX_QUESTIONS = 20;
-const QUESTION_LEAD_MS = 20000;
-const AFTER_QUESTION_DELAY_MS = 5000;
+const QUESTION_LEAD_MS = 20000;       // 20s hiển thị câu hỏi
+const AFTER_QUESTION_DELAY_MS = 5000; // 5s chờ sang màn
 const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
-// Heart
+// Heart giữa 2 ống
 const HEART_R = 12;
 const HEARTS_TOTAL = 20;
 const MIN_HEART_GAP_X = 160;
 
-// Items
+// Q-items trong khoảng trống
 const QITEM_R = 16;
 const ICON_FONT = 'bold 26px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
-const QITEM_Q_PHASE_MAX_PAIRS = 3;
+const QITEM_Q_PHASE_MAX_PAIRS   = 3;
 const QITEM_GAP_PHASE_MAX_PAIRS = 2;
-const QITEM_SPAWN_MS_BASE_Q = 1600;
+const QITEM_SPAWN_MS_BASE_Q   = 1600;
 const QITEM_SPAWN_MS_BASE_GAP = 1200;
-const QITEM_SPAWN_JITTER = 0.35;
+const QITEM_SPAWN_JITTER      = 0.35;
 const QITEM_MIN_Y = 60;
 const QITEM_Y_GAP = 60;
 
@@ -172,14 +136,14 @@ let dog, pipes, bones, hearts, qItems;
 let score, best = 0, spawnTimer, lastTs;
 let lives, invincibleUntil = 0;
 
-// Q&A
+// Q&A state
 let questionPending = false;
 let questionActive  = false;
 let questionIndex   = 0;
 let nextQuestionScore = QUESTION_EVERY;
 let questionCountdownUntil = 0;
 let QUESTIONS_RT = [];
-let askedQuestions = []; // <— LƯU DẤU NHỮNG CÂU ĐÃ HỎI
+let askedQuestions = []; // lưu các câu đã hiển thị (để recap)
 
 // Sau Q&A
 let afterQuestionUntil = 0;
@@ -198,34 +162,173 @@ let nextQItemAt = 0;
 let qPairsSpawnedInPhase = 0;
 let gapPairsSpawnedInPhase = 0;
 
-/* ===================== HUD ===================== */
-const scoreEl  = document.getElementById("score");
-const bestEl   = document.getElementById("best");
-const msgEl    = document.getElementById("msg");
-const livesEl  = document.getElementById("lives");
-const playerEl = document.getElementById("player");
-const qbanner  = document.getElementById("qbanner");
-const helpBtn  = document.getElementById("helpBtn");
-const timerEl  = document.getElementById("timer");
-const toastEl  = document.getElementById("toast");
-const qstatsEl = document.getElementById("qstats");
+/* ===================== ENTITIES ===================== */
+class Dog {
+  constructor(x, y) { this.x = x; this.y = y; this.vy = 0; this.r = 18; }
+  flap(){ this.vy = JUMP_VY; }
+  update(dt){ this.vy += GRAVITY * dt; this.y += this.vy * dt; }
+  draw(){
+    const angle = Math.max(-0.6, Math.min(0.6, this.vy / 12));
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(angle);
+    if (spriteReady) {
+      ctx.drawImage(spriteMrGold, -DOG_SPRITE_W/2, -DOG_SPRITE_H/2, DOG_SPRITE_W, DOG_SPRITE_H);
+    } else {
+      ctx.fillStyle = "#f4b400";
+      ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
 
-/* ===================== INTRO / FORM ===================== */
-const intro       = document.getElementById("intro");
-const startBtn    = document.getElementById("startBtn");
-const playerNameI = document.getElementById("playerName");
-const dogStyleI   = document.getElementById("dogStyle");
+class Bone {
+  constructor(x, y, label, isCorrect){
+    this.x = x; this.y = y; this.label = label; this.isCorrect = isCorrect; this.hit = false;
+    this.r = BONE_R * BONE_SCALE;
+  }
+  update(dt){ this.x -= PIPE_SPEED * dt; }
+  draw(){
+    const s = BONE_SCALE;
+    ctx.fillStyle = "#fffde7";
+    ctx.beginPath(); ctx.arc(this.x-10*s, this.y-6*s, 6*s, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(this.x-10*s, this.y+6*s, 6*s, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(this.x-10*s, this.y-6*s, 20*s, 12*s);
+    ctx.beginPath(); ctx.arc(this.x+10*s, this.y-6*s, 6*s, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(this.x+10*s, this.y+6*s, 6*s, 0, Math.PI*2); ctx.fill();
 
-const DOG_STYLES = {
-  shiba: { body:"#f4b400", ear:"#f09300", nose:"#6d4c41", eye:"#212121" },
-  corgi: { body:"#ff8f00", ear:"#ff6f00", nose:"#5d4037", eye:"#1b1b1b" },
-  husky: { body:"#9e9e9e", ear:"#757575", nose:"#424242", eye:"#101010" },
-  pug:   { body:"#ffe0b2", ear:"#c49a6c", nose:"#5d4037", eye:"#1b1b1b" }
-};
-let currentSkin = "shiba";
-let playerName  = "Player";
+    ctx.fillStyle = "#0b3d91";
+    ctx.textAlign = "center";
+    ctx.font = `bold ${Math.round(12*s)}px system-ui, Arial`;
+    ctx.fillText(this.label, this.x, this.y + 4*s);
+  }
+}
 
-/* ===================== QUESTIONS DATA ===================== */
+class Heart {
+  constructor(x,y){ this.x=x; this.y=y; this.r=HEART_R; this.hit=false; }
+  update(dt){ this.x -= PIPE_SPEED * dt; }
+  draw(){
+    ctx.fillStyle="#e53935";
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y+4);
+    ctx.bezierCurveTo(this.x+12, this.y-10, this.x+22, this.y+6, this.x, this.y+18);
+    ctx.bezierCurveTo(this.x-22, this.y+6, this.x-12, this.y-10, this.x, this.y+4);
+    ctx.fill();
+  }
+}
+
+class QItem {
+  constructor(x,y,type){ this.x=x; this.y=y; this.type=type; this.r=QITEM_R; this.hit=false; }
+  update(dt){ this.x -= PIPE_SPEED * dt; }
+  draw(){
+    ctx.font = ICON_FONT;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const ch = (this.type==="pho") ? "🍜" : "💩";
+    ctx.fillText(ch, this.x, this.y);
+  }
+}
+
+/* ===================== HELPERS ===================== */
+function updateLivesHUD(){
+  livesEl.textContent = "❤".repeat(lives);
+}
+function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
+
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, m => (
+    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]
+  ));
+}
+function formatMultiline(s){ return escapeHTML(s).replace(/\n/g, "<br>"); }
+
+function showQBanner(html){
+  qbanner.style.display = "block";
+  qbanner.style.whiteSpace = "normal";
+  qbanner.style.lineHeight = "1.25";
+  qbanner.innerHTML = html;
+}
+function hideQBanner(){ qbanner.style.display="none"; }
+
+function showToast(t, good=true){
+  toastEl.style.display="block";
+  toastEl.style.background = good ? "rgba(6,128,67,.9)" : "rgba(183,28,28,.9)";
+  toastEl.textContent = t;
+  clearTimeout(showToast._t); showToast._t = setTimeout(()=>toastEl.style.display="none", 1600);
+}
+function setTimerText(t){ timerEl.textContent = t || ""; }
+
+function nearestPipeAhead(){
+  let minX = Infinity, tgt = null;
+  for (const p of pipes){ if (p.x + p.w > dog.x && p.x < minX){ minX = p.x; tgt = p; } }
+  return tgt;
+}
+function canSpawnPipes(nowMs){ return !questionActive && !questionPending && nowMs >= afterQuestionUntil; }
+function randJitter(base, pct){ const d = base * pct; return base + (Math.random()*2-1)*d; }
+
+/* ===================== GROWTH RECAP ===================== */
+const GROWTH_TIPS = [
+  "Sai = dữ liệu học; ghi lại, tìm nguyên nhân gốc và sửa ở lần sau.",
+  "Nói: “Chưa làm được… CHƯA” để mở cánh cửa tiến bộ.",
+  "Tập trung vào quá trình: đặt mục tiêu nhỏ + đo tiến độ từng bước.",
+  "Thử chiến lược mới khi dữ liệu báo xấu, đừng cố chấp.",
+  "Xin phản hồi cụ thể, chọn phần hữu ích để áp dụng ngay.",
+  "So sánh với chính mình của hôm qua, không phải với người khác.",
+  "Luyện tập có chủ đích: mục tiêu rõ, phản hồi nhanh, lặp lại có chủ tâm.",
+  "Ôn theo khoảng cách (spaced repetition) thay vì nhồi nhét một đêm.",
+  "Dùng checklist/Pomodoro để tự giám sát sự tập trung.",
+  "Chấp nhận thách thức; lỗi là bậc thang để giỏi hơn."
+];
+function pickRandomTips(n=6){
+  const arr = [...GROWTH_TIPS];
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr.slice(0, n);
+}
+
+function showRecapDialog(outcome){
+  // cập nhật header/subtitle của dialog theo outcome
+  const h2 = winDlg.querySelector("header h2");
+  const sub = winDlg.querySelector("header p");
+  if (outcome === "victory"){
+    if (h2)  h2.textContent = "🎉 CHÚC MỪNG!";
+    if (sub) sub.innerHTML = 'Bạn đã thoát khỏi <b>anh Exciter</b> và hoàn thành 20 câu hỏi!';
+  } else {
+    if (h2)  h2.textContent = "💡 BÀI HỌC SAU THẤT BẠI";
+    if (sub) sub.innerHTML = 'Bạn đã bị <b>anh Exciter</b> bắt 🤣 — nhưng <b>thất bại = dữ liệu học</b>. Cùng tổng kết rồi chơi lại nhé!';
+  }
+
+  // thống kê
+  const answered = correctCount + wrongCount;
+  const acc = answered ? Math.round((correctCount/answered)*100) : 0;
+
+  // 6 tip ngẫu nhiên vào <ul id="gmList">
+  const gmList = winDlg.querySelector("#gmList");
+  if (gmList){
+    gmList.innerHTML = pickRandomTips(6).map(t=>`<li>${escapeHTML(t)}</li>`).join("");
+  }
+
+  // 3 câu gần nhất đã gặp
+  const lastQs = askedQuestions.slice(-3).map(q =>
+    `<li style="margin-bottom:6px">${formatMultiline(q.q)}<br><small>Đáp án đúng: <b>${q.correct}</b> — A) ${escapeHTML(q.a)} • B) ${escapeHTML(q.b)}</small></li>`
+  ).join("");
+
+  // phần summary
+  winSummaryEl.innerHTML =
+    `<div><b>Người chơi:</b> ${escapeHTML(playerName)}</div>
+     <div><b>Điểm:</b> ${score}</div>
+     <div><b>Đúng/Sai:</b> ${correctCount} / ${wrongCount} (Độ chính xác: ${acc}%)</div>
+     <div><b>Mạng còn lại:</b> ${lives}</div>
+     <details style="margin-top:8px">
+       <summary><b>Xem lại 3 câu gần nhất</b></summary>
+       <ul style="margin:6px 0 0 18px">${lastQs || "<li>(Chưa có câu hỏi nào)</li>"}</ul>
+     </details>`;
+
+  if (winDlg?.showModal) winDlg.showModal();
+  else winDlg?.setAttribute("open","");
+}
+
+/* ===================== QUESTIONS (with CONTEXT) ===================== */
+// 60 câu gốc (đáp án đúng mặc định A)
 const QUESTIONS_POOL = [
   // 1–20 (giữ nguyên nội dung – đáp án đúng mặc định: A)
   { q:"Growth mindset là gì?", a:"Năng lực phát triển", b:"Năng lực cố định", correct:"A" },
@@ -358,153 +461,33 @@ const QUESTION_CONTEXTS = {
   60:"Bạn dễ xao nhãng, muốn thử Pomodoro."
 };
 
-/* ===================== ENTITIES ===================== */
-class Dog {
-  constructor(x, y) { this.x = x; this.y = y; this.vy = 0; this.r = 18; }
-  flap()   { this.vy = JUMP_VY; }
-  update(dt){ this.vy += GRAVITY * dt; this.y += this.vy * dt; }
-  draw() {
-    const angle = Math.max(-0.6, Math.min(0.6, this.vy / 12));
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(angle);
-    if (typeof spriteReady !== "undefined" && spriteReady) {
-      ctx.drawImage(spriteMrGold, -DOG_SPRITE_W/2, -DOG_SPRITE_H/2, DOG_SPRITE_W, DOG_SPRITE_H);
-    } else {
-      ctx.fillStyle = "#f4b400";
-      ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-  }
+// ghép bối cảnh vào nội dung q
+function combineContextIntoQ(baseQ, ctxStr){
+  return ctxStr ? `Tình huống: ${ctxStr}\nCâu hỏi: ${baseQ}` : baseQ;
 }
 
-function drawExciter(nowMs){
-  if (!EXCITER_SHOW || !exciterReady) return;
-
-  const ratio = (exciterImg.naturalHeight || 1) / (exciterImg.naturalWidth || 1);
-  const eW = DOG_SPRITE_W * (typeof EXCITER_TOP_SCALE !== "undefined" ? EXCITER_TOP_SCALE : 1.15) * 1.6;
-  const eH = eW * ratio;
-
-  if (exciterMode === "followTop"){
-    const targetX = dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0);
-    exciterCX += (targetX - exciterCX) * 0.18;
-    exciterCY  = (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52);
-  } else if (exciterMode === "attack"){
-    const t  = Math.min(1, (nowMs - exciterT0) / EXCITER_ATTACK_MS);
-    const p  = EXCITER_ATTACK_EASE(t);
-    exciterCX = exciterFrom.x + (exciterTo.x - exciterFrom.x) * p;
-    exciterCY = exciterFrom.y + (exciterTo.y - exciterFrom.y) * p;
-
-    if (t >= 1){
-      exciterMode = "followTop";
-      gameOver();  // gọi hàm Game Over gốc (sẽ mở recap)
-    }
-  }
-
-  ctx.save();
-  ctx.globalAlpha = (typeof EXCITER_ALPHA !== "undefined" ? EXCITER_ALPHA : 0.95);
-  ctx.drawImage(exciterImg, exciterCX - eW/2, exciterCY - eH/2, eW, eH);
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-class Bone {
-  constructor(x, y, label, isCorrect){
-    this.x = x; this.y = y; this.label = label; this.isCorrect = isCorrect; this.hit = false;
-    this.r = BONE_R * BONE_SCALE;
-  }
-  update(dt){ this.x -= PIPE_SPEED * dt; }
-  draw(){
-    const s = BONE_SCALE;
-    ctx.fillStyle = "#fffde7";
-    ctx.beginPath(); ctx.arc(this.x-10*s, this.y-6*s, 6*s, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(this.x-10*s, this.y+6*s, 6*s, 0, Math.PI*2); ctx.fill();
-    ctx.fillRect(this.x-10*s, this.y-6*s, 20*s, 12*s);
-    ctx.beginPath(); ctx.arc(this.x+10*s, this.y-6*s, 6*s, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(this.x+10*s, this.y+6*s, 6*s, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "#0b3d91";
-    ctx.textAlign = "center";
-    ctx.font = `bold ${Math.round(12*s)}px system-ui, Arial`;
-    ctx.fillText(this.label, this.x, this.y + 4*s);
-  }
-}
-class Heart {
-  constructor(x,y){ this.x=x; this.y=y; this.r=HEART_R; this.hit=false; }
-  update(dt){ this.x -= PIPE_SPEED * dt; }
-  draw(){
-    ctx.fillStyle="#e53935";
-    ctx.beginPath();
-    ctx.moveTo(this.x, this.y+4);
-    ctx.bezierCurveTo(this.x+12, this.y-10, this.x+22, this.y+6, this.x, this.y+18);
-    ctx.bezierCurveTo(this.x-22, this.y+6, this.x-12, this.y-10, this.x, this.y+4);
-    ctx.fill();
-  }
-}
-class QItem {
-  constructor(x,y,type){ this.x=x; this.y=y; this.type=type; this.r=QITEM_R; this.hit=false; }
-  update(dt){ this.x -= PIPE_SPEED * dt; }
-  draw(){
-    ctx.font = ICON_FONT;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const ch = (this.type==="pho") ? "🍜" : "💩";
-    ctx.fillText(ch, this.x, this.y);
-  }
-}
-
-/* ===================== HELPERS ===================== */
-function updateLivesHUD(){
-  livesEl.textContent = "❤".repeat(lives);
-}
-function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
-function escapeHTML(s){
-  return String(s).replace(/[&<>"']/g, m => (
-    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]
-  ));
-}
-function formatMultiline(s){ return escapeHTML(s).replace(/\n/g, "<br>"); }
-function showQBanner(html){
-  qbanner.style.display = "block";
-  qbanner.style.whiteSpace = "normal";
-  qbanner.style.lineHeight = "1.25";
-  qbanner.innerHTML = html;
-}
-function hideQBanner(){ qbanner.style.display="none"; }
-function showToast(t, good=true){
-  toastEl.style.display="block";
-  toastEl.style.background = good ? "rgba(6,128,67,.9)" : "rgba(183,28,28,.9)";
-  toastEl.textContent = t;
-  clearTimeout(showToast._t); showToast._t = setTimeout(()=>toastEl.style.display="none", 1600);
-}
-function setTimerText(t){ timerEl.textContent = t || ""; }
-function nearestPipeAhead(){
-  let minX = Infinity, tgt = null;
-  for (const p of pipes){ if (p.x + p.w > dog.x && p.x < minX){ minX = p.x; tgt = p; } }
-  return tgt;
-}
-function canSpawnPipes(nowMs){ return !questionActive && !questionPending && nowMs >= afterQuestionUntil; }
-function randJitter(base, pct){ const d = base * pct; return base + (Math.random()*2-1)*d; }
-function combineContextIntoQ(baseQ, ctxStr){ return ctxStr ? `Tình huống: ${ctxStr}\nCâu hỏi: ${baseQ}` : baseQ; }
-
-/* ===================== CORE ===================== */
 function prepareQuestions(){
+  // 1) gắn bối cảnh trực tiếp vào q
   const poolWithCtx = QUESTIONS_POOL.map((q, i) => ({
     ...q,
     q: combineContextIntoQ(q.q, QUESTION_CONTEXTS[i+1] || "")
   }));
+  // 2) xáo trộn
   const pool = [...poolWithCtx];
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  // 3) chọn MAX_QUESTIONS
   const selected = pool.slice(0, MAX_QUESTIONS);
-
+  // 4) đảo A/B khoảng 1/2 số câu
   const flips = Array(selected.length).fill(false).map((_,i)=> i < Math.floor(selected.length/2));
   for (let i = flips.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [flips[i], flips[j]] = [flips[j], flips[i]]; }
-
-  QUESTIONS_RT = selected.map((q, idx) => {
-    if (!flips[idx]) return { ...q };
-    return { q: q.q, a: q.b, b: q.a, correct: (q.correct === "A" ? "B" : "A") };
-  });
+  // 5) áp dụng đảo
+  QUESTIONS_RT = selected.map((q, idx) => (!flips[idx])
+    ? { ...q }
+    : { q: q.q, a: q.b, b: q.a, correct: (q.correct === "A" ? "B" : "A") }
+  );
 }
 
+/* ===================== GAME FLOW ===================== */
 function reset(){
   dog = new Dog(80, canvas.height/2);
   pipes = []; bones = []; hearts = []; qItems = [];
@@ -521,12 +504,12 @@ function reset(){
   heartSpawnedForStage.fill(false);
   currentStage = 1; heartPendingStage = 1; stageFirstPipeForHeart = null;
 
-  askedQuestions = []; // reset lịch sử câu hỏi
+  askedQuestions = [];
   prepareQuestions();
 
   exciterMode = "followTop";
-  exciterCX =  dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0);
-  exciterCY = (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52);
+  exciterCX = dog.x + EXCITER_TOP_OFFSET_X;
+  exciterCY = EXCITER_TOP_Y;
 
   scoreEl.textContent = score;
   best = Number(localStorage.getItem("flappyDogBest") || 0);
@@ -541,6 +524,7 @@ function spawnPipe(){
   const p = { x: canvas.width, top, gap: PIPE_GAP, w: PIPE_W, scored:false };
   pipes.push(p);
 
+  // tim giữa hai ống – mỗi màn 1 tim
   if (heartPendingStage && heartPendingStage <= HEARTS_TOTAL && !heartSpawnedForStage[heartPendingStage-1]){
     if (!stageFirstPipeForHeart){
       stageFirstPipeForHeart = p;
@@ -562,11 +546,13 @@ function spawnPipe(){
     }
   }
 }
+
 function updatePipes(dt){
   const dx = PIPE_SPEED*dt;
   pipes.forEach(p=>p.x-=dx);
   while (pipes.length && pipes[0].x + pipes[0].w < 0) pipes.shift();
 }
+
 function drawPipes(){
   ctx.fillStyle="#4caf50";
   pipes.forEach(p=>{
@@ -607,17 +593,15 @@ function loseLife(){
     pipes = pipes.filter(p=>p.x + p.w >= dog.x - 10);
     msgEl.textContent = "Cố lên! -1 mạng • Tiếp tục!";
   } else {
+    // hết mạng → kích hoạt cutscene Exciter lao xuống, sau đó gameOver()
     lives = 0; updateLivesHUD();
     pipes = []; hearts = []; bones = []; qItems = [];
     dog.vy = 0;
 
     const nowMs = performance.now();
-    exciterFrom = {
-      x: exciterCX || (dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0)),
-      y: (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52)
-    };
-    exciterTo = { x: dog.x, y: dog.y };
-    exciterT0 = nowMs;
+    exciterFrom = { x: exciterCX || (dog.x + EXCITER_TOP_OFFSET_X), y: EXCITER_TOP_Y };
+    exciterTo   = { x: dog.x, y: dog.y };
+    exciterT0   = nowMs;
     exciterMode = "attack";
     state = "gameover_attack";
     msgEl.textContent = "";
@@ -631,10 +615,19 @@ function gameOver(){
   bestEl.textContent = `Best: ${best}`;
   hideQBanner(); setTimerText("");
   msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
-  showRecapDialog("gameover"); // <— MỞ RECAP KHI THUA
+  showRecapDialog("gameover"); // ← đúc kết khi THUA
 }
 
-/* ===================== QUESTIONS FLOW ===================== */
+function gameWin(){
+  state = "victory";
+  hideQBanner(); setTimerText("");
+  // dọn bớt vật thể để tập trung dialog
+  pipes = []; bones = []; qItems = [];
+  dog.vy = 0;
+  showRecapDialog("victory");  // ← đúc kết khi THẮNG
+}
+
+/* ===================== QUESTION FLOW ===================== */
 function questionPointFor(n){ if (n<=5) return 1; if (n<=10) return 2; if (n<=15) return 3; return 4; }
 
 function spawnQuestion(nowMs){
@@ -661,9 +654,10 @@ function spawnQuestion(nowMs){
     new Bone(targetX, yMid + delta, "B", Q.correct === "B"),
   ];
 
-  // Lưu lịch sử câu đã hỏi để recap
+  // lưu lại để recap
   askedQuestions.push({ q: Q.q, a: Q.a, b: Q.b, correct: Q.correct });
 
+  // quota Q-items trong phase Q&A
   qPairsSpawnedInPhase = 0;
   nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_Q, QITEM_SPAWN_JITTER);
 
@@ -686,9 +680,11 @@ function finishQuestion(nowMs, isCorrect){
   afterQuestionUntil = nowMs + AFTER_QUESTION_DELAY_MS;
   postCountdownUntil = afterQuestionUntil;
 
+  // quota Q-items trong phase 5s chờ
   gapPairsSpawnedInPhase = 0;
   nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_GAP, QITEM_SPAWN_JITTER);
 
+  // chuẩn bị tim cho màn kế
   currentStage = Math.min(questionIndex + 1, HEARTS_TOTAL);
   if (currentStage <= HEARTS_TOTAL){ heartPendingStage = currentStage; stageFirstPipeForHeart = null; }
 }
@@ -709,7 +705,7 @@ function checkBoneCollisions(nowMs){
   }
 }
 
-/* ===================== Q-ITEMS ===================== */
+/* ===================== Q-ITEMS IN PHASES ===================== */
 function itemsPhaseActive(nowMs){ return questionActive || nowMs < afterQuestionUntil; }
 function maybeSpawnQItems(nowMs){
   if (!itemsPhaseActive(nowMs)) return;
@@ -725,6 +721,7 @@ function maybeSpawnQItems(nowMs){
     nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_GAP, QITEM_SPAWN_JITTER);
   }
 
+  // sinh "cặp" 🍜/💩 lệch Y
   const y1 = QITEM_MIN_Y + Math.random()*(canvas.height - QITEM_MIN_Y*2);
   let y2 = QITEM_MIN_Y + Math.random()*(canvas.height - QITEM_MIN_Y*2);
   if (Math.abs(y2 - y1) < QITEM_Y_GAP){
@@ -795,7 +792,13 @@ function drawBackground(){
   ctx.fillRect(0, canvas.height-10, canvas.width, 10);
 }
 
-function drawTitle(){ ctx.fillStyle="#08357e"; ctx.font="bold 28px system-ui, Arial"; ctx.textAlign="center"; ctx.fillText("FLAPPY MR.GOLD", canvas.width/2, 80); }
+function drawTitle(){
+  ctx.fillStyle="#08357e";
+  ctx.font="bold 28px system-ui, Arial";
+  ctx.textAlign="center";
+  ctx.fillText("FLAPPY MR.GOLD", canvas.width/2, 80);
+}
+
 function updateTimerUI(nowMs){
   if (questionActive){
     const left = Math.max(0, Math.ceil((questionCountdownUntil - nowMs)/1000));
@@ -805,6 +808,32 @@ function updateTimerUI(nowMs){
     setTimerText(`Sang màn sau: ${left}s`);
   } else setTimerText("");
 }
+
+function drawExciter(nowMs){
+  if (!EXCITER_SHOW || !exciterReady) return;
+  const ratio = (exciterImg.naturalHeight || 1) / (exciterImg.naturalWidth || 1);
+  const eW = DOG_SPRITE_W * EXCITER_TOP_SCALE * 1.6;
+  const eH = eW * ratio;
+
+  if (exciterMode === "followTop"){
+    const targetX = dog.x + EXCITER_TOP_OFFSET_X;
+    exciterCX += (targetX - exciterCX) * 0.18;
+    exciterCY  = EXCITER_TOP_Y;
+  } else if (exciterMode === "attack"){
+    const t  = Math.min(1, (nowMs - exciterT0) / EXCITER_ATTACK_MS);
+    const p  = EXCITER_ATTACK_EASE(t);
+    exciterCX = exciterFrom.x + (exciterTo.x - exciterFrom.x) * p;
+    exciterCY = exciterFrom.y + (exciterTo.y - exciterFrom.y) * p;
+    if (t >= 1){ exciterMode = "followTop"; gameOver(); }
+  }
+
+  ctx.save();
+  ctx.globalAlpha = EXCITER_ALPHA;
+  ctx.drawImage(exciterImg, exciterCX - eW/2, exciterCY - eH/2, eW, eH);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 function loop(ts){
   const dtMs = lastTs ? ts - lastTs : 16.67; lastTs = ts;
   const dt = dtMs / 16.67;
@@ -823,6 +852,7 @@ function loop(ts){
   } else if (state === "playing"){
     if (canSpawnPipes(nowMs)){ spawnTimer += dtMs; if (spawnTimer > SPAWN_MS){ spawnPipe(); spawnTimer = 0; } }
 
+    // vật phẩm trong phase Q&A / nghỉ 5s
     maybeSpawnQItems(nowMs);
 
     dog.update(dt);
@@ -843,24 +873,17 @@ function loop(ts){
     checkBoneCollisions(nowMs);
 
     if (collided()) loseLife();
-  } else if (state === "gameover"){
+  } else if (state === "gameover" || state === "victory"){
     drawPipes(); hearts.forEach(h=>h.draw()); qItems.forEach(it=>it.draw()); bones.forEach(b=>b.draw()); dog.draw();
-  } else if (state === "victory"){
-    drawPipes();
-    hearts.forEach(h=>h.draw());
-    qItems.forEach(it=>it.draw());
-    bones.forEach(b=>b.draw());
-    dog.draw();
   }
 
   updateTimerUI(nowMs);
   msgEl.style.opacity = state === "playing" ? 0 : 1;
   requestAnimationFrame(loop);
-
   drawExciter(nowMs);
 }
 
-/* ===================== CONTROLS & INTRO ===================== */
+/* ===================== CONTROLS ===================== */
 function isTypingInForm(){
   const a = document.activeElement; if (!a) return false;
   const tag = a.tagName;
@@ -883,7 +906,7 @@ window.addEventListener("touchstart", (e)=>{ if (!intro?.open){ e.preventDefault
 
 function openIntro(){
   const savedName = localStorage.getItem("flappyDogName");
-  const savedSkin = localStorage.getItem("flappyDogSkin");
+  const savedSkin = localStorage.getItem("flappyDogSkin"); // dự phòng nếu dùng skin
   if (savedName) playerNameI.value = savedName;
   if (savedSkin && dogStyleI.querySelector(`option[value="${savedSkin}"]`)) dogStyleI.value = savedSkin;
   if (intro && typeof intro.showModal==="function") intro.showModal();
@@ -891,7 +914,7 @@ function openIntro(){
 }
 startBtn?.addEventListener("click", ()=>{
   playerName = (playerNameI.value||"").trim() || "Player";
-  currentSkin = dogStyleI.value || "shiba";
+  const currentSkin = dogStyleI.value || "photo";
   localStorage.setItem("flappyDogName", playerName);
   localStorage.setItem("flappyDogSkin", currentSkin);
   playerEl.textContent = `👤 ${playerName}`;
@@ -902,7 +925,7 @@ helpBtn?.addEventListener("click", ()=>{
   openIntro();
 });
 
-/* ===================== BOOT ===================== */
+/* ===================== INIT ===================== */
 playerEl.textContent = `👤 ${playerName}`;
 reset();
 openIntro();
@@ -912,5 +935,6 @@ winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
 });
+
 
 
