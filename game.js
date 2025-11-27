@@ -7,32 +7,65 @@ const winSummaryEl = document.getElementById("winSummary");
 const winRestart   = document.getElementById("winRestart");
 let state = "intro";   // "intro" | "ready" | "playing" | "paused" | "victory" | "gameover"
 
+/* ===================== GROWTH RECAP ===================== */
+const GROWTH_TIPS = [
+  "Sai = dữ liệu học; ghi lại, tìm nguyên nhân gốc và sửa ở lần sau.",
+  "Nói: “Chưa làm được… CHƯA” để mở cánh cửa tiến bộ.",
+  "Tập trung vào quá trình: đặt mục tiêu nhỏ + đo tiến độ từng bước.",
+  "Thử chiến lược mới khi dữ liệu báo xấu, đừng cố chấp.",
+  "Xin phản hồi cụ thể, chọn phần hữu ích để áp dụng ngay.",
+  "So sánh với chính mình của hôm qua, không phải với người khác.",
+  "Luyện tập có chủ đích: mục tiêu rõ, phản hồi nhanh, lặp lại có chủ tâm.",
+  "Ôn theo khoảng cách (spaced repetition) thay vì nhồi nhét một đêm.",
+  "Dùng checklist/Pomodoro để tự giám sát sự tập trung.",
+  "Chấp nhận thách thức; lỗi là bậc thang để giỏi hơn."
+];
+function pickRandomTips(n=6){
+  const arr = [...GROWTH_TIPS];
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr.slice(0, n);
+}
+function showRecapDialog(outcome){
+  const answered = correctCount + wrongCount;
+  const acc = answered ? Math.round((correctCount/answered)*100) : 0;
+  const tips = pickRandomTips(6).map(t=>`<li>${escapeHTML(t)}</li>`).join("");
+
+  const lastQs = askedQuestions.slice(-3).map(q =>
+    `<li style="margin-bottom:6px">${formatMultiline(q.q)}<br><small>Đáp án đúng: <b>${q.correct}</b> — A) ${escapeHTML(q.a)} • B) ${escapeHTML(q.b)}</small></li>`
+  ).join("");
+
+  const title = outcome === "victory" ? "🏆 Hoàn thành!" : "💡 Bài học sau thất bại";
+  winSummaryEl.innerHTML =
+    `<h3 style="margin:0 0 8px">${title}</h3>
+     <div><b>Người chơi:</b> ${escapeHTML(playerName)}</div>
+     <div><b>Điểm:</b> ${score}</div>
+     <div><b>Đúng/Sai:</b> ${correctCount} / ${wrongCount} (Độ chính xác: ${acc}%)</div>
+     <div><b>Mạng còn lại:</b> ${lives}</div>
+     <hr>
+     <div><b>Đúc kết Growth Mindset</b></div>
+     <ul style="margin:6px 0 10px 18px">${tips}</ul>
+     <details>
+       <summary><b>Xem lại 3 câu gần nhất đã gặp</b></summary>
+       <ul style="margin:6px 0 0 18px">${lastQs || "<li>(Chưa có câu hỏi nào)</li>"}</ul>
+     </details>`;
+
+  if (winDlg?.showModal) winDlg.showModal();
+  else winDlg?.setAttribute("open","");
+}
+
 function gameWin(){
   state = "victory";
   hideQBanner(); setTimerText("");
   // dừng spawn & dọn bớt vật thể
   pipes = []; bones = []; qItems = [];
   dog.vy = 0;
-
-  const answered = correctCount + wrongCount;
-  const acc = answered ? Math.round((correctCount/answered)*100) : 0;
-
-  winSummaryEl.innerHTML =
-    `<div><b>Người chơi:</b> ${playerName}</div>
-     <div><b>Điểm:</b> ${score}</div>
-     <div><b>Đúng/Sai:</b> ${correctCount} / ${wrongCount} (Độ chính xác: ${acc}%)</div>
-     <div><b>Mạng còn lại:</b> ${lives}</div>`;
-
-  if (winDlg?.showModal) winDlg.showModal();
-  else winDlg?.setAttribute("open","");
+  showRecapDialog("victory");
 }
 
-
-
-// === SPRITE: Mr. Gold ===
-const SPRITE_PATH = "assets/mrgold.png";  // đổi nếu thầy/cô để chỗ khác
+/* === SPRITE: Mr. Gold === */
+const SPRITE_PATH = "assets/mrgold.png";
 const spriteMrGold = new Image();
-spriteMrGold.decoding = "async";          // hint decode không chặn render (browser support: tốt)
+spriteMrGold.decoding = "async";
 spriteMrGold.src = SPRITE_PATH;
 
 let spriteReady = false;
@@ -42,14 +75,12 @@ if (spriteMrGold.decode) {
 } else {
   spriteMrGold.onload = () => spriteReady = true;
 }
-
-// (tuỳ chọn) nếu ảnh lớn, giữ mượt khi scale:
 ctx.imageSmoothingEnabled = true;
 
-// === SPRITE: Exciter (overlay dính vào Mr. Gold) ===
+/* === SPRITE: Exciter (overlay dính vào Mr. Gold) === */
 const EXCITER_PATH = "assets/exciter.png";
 const exciterImg = new Image();
-exciterImg.decoding = "async";      // gợi ý giải mã bất đồng bộ
+exciterImg.decoding = "async";
 exciterImg.src = EXCITER_PATH;
 
 let exciterReady = false;
@@ -60,32 +91,29 @@ if (exciterImg.decode) {
   exciterImg.onload = ()=> exciterReady = true;
 }
 
-// === Exciter fixed-top (không nhảy) ===
 const EXCITER_SHOW = true;
 const EXCITER_ALPHA = 0.95;
-const EXCITER_TOP_SCALE = 1.15;        // to/nhỏ
-const EXCITER_TOP_Y = 65;              // cao sát mép trên (px)
-const EXCITER_TOP_OFFSET_X = 0;        // lệch trái/phải so với X của chó
+const EXCITER_TOP_SCALE = 1.15;
+const EXCITER_TOP_Y = 65;
+const EXCITER_TOP_OFFSET_X = 0;
 
-
-// === CẮT CẢNH GAME OVER: EXCITER LAO XUỐNG CHÓ ===
-const DOG_SPRITE_W = 110;                 // đồng bộ với kích thước chó đang vẽ
+/* === CẮT CẢNH GAME OVER: EXCITER LAO XUỐNG CHÓ === */
+const DOG_SPRITE_W = 110;
 const DOG_SPRITE_H = 62;
 
-const EXCITER_ATTACK_MS = 1500;           // 1.5s lao xuống
-const EXCITER_ATTACK_EASE = t => 1 - Math.pow(1 - t, 3); // easeOutCubic
+const EXCITER_ATTACK_MS = 1500;
+const EXCITER_ATTACK_EASE = t => 1 - Math.pow(1 - t, 3);
 
-let exciterMode = "followTop";            // "followTop" | "attack"
-let exciterCX = 0, exciterCY = 0;         // tâm vẽ Exciter (toạ độ logic)
+let exciterMode = "followTop";    // "followTop" | "attack"
+let exciterCX = 0, exciterCY = 0;
 let exciterFrom = { x: 0, y: 0 };
 let exciterTo   = { x: 0, y: 0 };
 let exciterT0   = 0;
 
-
-// === BACKGROUND ===
-const BG_PATH = "assets/bg.png";      // đổi nếu đặt nơi khác
+/* === BACKGROUND === */
+const BG_PATH = "assets/bg.png";
 const bgImg = new Image();
-bgImg.decoding = "async";             // gợi ý decode bất đồng bộ
+bgImg.decoding = "async";
 bgImg.src = BG_PATH;
 
 let bgReady = false;
@@ -97,9 +125,9 @@ if (bgImg.decode) {
 }
 
 // Parallax
-const BG_SCROLL_SPEED = 1.2;          // chậm hơn ống (PIPE_SPEED=2.4) để tạo chiều sâu
+const BG_SCROLL_SPEED = 1.2;
 let bgScrollX = 0;
-ctx.imageSmoothingEnabled = true;     // phóng to ảnh mượt hơn
+ctx.imageSmoothingEnabled = true;
 
 /* ===================== CONSTANTS ===================== */
 const GRAVITY = 0.45;
@@ -113,34 +141,33 @@ const INVINCIBLE_MS = 1000;
 const START_LIVES = 5;
 const MAX_LIVES_CAP = 10;
 
-const BONE_R = 14;        // bán kính dùng cho va chạm
-const BONE_SCALE = 3;  // HỆ SỐ PHÓNG KHÚC XƯƠNG (1.0 = như cũ; 1.3 = to hơn 30%)
+const BONE_R = 14;
+const BONE_SCALE = 3;
 
 // Q&A timing
 const QUESTION_EVERY = 3;
 const MAX_QUESTIONS = 20;
-const QUESTION_LEAD_MS = 20000;          // 20s đọc bối cảnh + câu hỏi
-const AFTER_QUESTION_DELAY_MS = 5000;    // 5s nghỉ
+const QUESTION_LEAD_MS = 20000;
+const AFTER_QUESTION_DELAY_MS = 5000;
 const SPEED_PX_PER_MS = PIPE_SPEED / 16.67;
 
-// Tim giữa 2 ống
+// Heart
 const HEART_R = 12;
 const HEARTS_TOTAL = 20;
 const MIN_HEART_GAP_X = 160;
 
-// Vật phẩm trong khoảng trống (🍜 / 🧪) — giảm số lượng
+// Items
 const QITEM_R = 16;
 const ICON_FONT = 'bold 26px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
-const QITEM_Q_PHASE_MAX_PAIRS = 3;      // tối đa 3 cặp trong 20s
-const QITEM_GAP_PHASE_MAX_PAIRS = 2;    // tối đa 2 cặp trong 5s
-const QITEM_SPAWN_MS_BASE_Q = 1600;     // khoảng nền (có jitter)
+const QITEM_Q_PHASE_MAX_PAIRS = 3;
+const QITEM_GAP_PHASE_MAX_PAIRS = 2;
+const QITEM_SPAWN_MS_BASE_Q = 1600;
 const QITEM_SPAWN_MS_BASE_GAP = 1200;
-const QITEM_SPAWN_JITTER = 0.35;        // ±35% jitter
+const QITEM_SPAWN_JITTER = 0.35;
 const QITEM_MIN_Y = 60;
 const QITEM_Y_GAP = 60;
 
 /* ===================== STATE ===================== */
-   // "intro" | "ready" | "playing" | "paused" | "gameover"
 let dog, pipes, bones, hearts, qItems;
 let score, best = 0, spawnTimer, lastTs;
 let lives, invincibleUntil = 0;
@@ -148,10 +175,11 @@ let lives, invincibleUntil = 0;
 // Q&A
 let questionPending = false;
 let questionActive  = false;
-let questionIndex   = 0;    // 0-based nội bộ
+let questionIndex   = 0;
 let nextQuestionScore = QUESTION_EVERY;
 let questionCountdownUntil = 0;
 let QUESTIONS_RT = [];
+let askedQuestions = []; // <— LƯU DẤU NHỮNG CÂU ĐÃ HỎI
 
 // Sau Q&A
 let afterQuestionUntil = 0;
@@ -159,18 +187,18 @@ let postCountdownUntil = 0;
 let correctCount = 0, wrongCount = 0;
 let resumeState = null;
 
-// Tim giữa 2 ống
+// Heart giữa 2 ống
 let currentStage = 1;
 let heartPendingStage = 1;
 let stageFirstPipeForHeart = null;
 const heartSpawnedForStage = Array(HEARTS_TOTAL).fill(false);
 
-// Sinh “cặp” 🍜/🧪 trong khoảng trống + quota giảm số lượng
+// QItems quota
 let nextQItemAt = 0;
 let qPairsSpawnedInPhase = 0;
 let gapPairsSpawnedInPhase = 0;
 
-/* ===================== HUD elts ===================== */
+/* ===================== HUD ===================== */
 const scoreEl  = document.getElementById("score");
 const bestEl   = document.getElementById("best");
 const msgEl    = document.getElementById("msg");
@@ -197,7 +225,7 @@ const DOG_STYLES = {
 let currentSkin = "shiba";
 let playerName  = "Player";
 
-/* ===================== QUESTIONS DATA (pool 60) ===================== */
+/* ===================== QUESTIONS DATA ===================== */
 const QUESTIONS_POOL = [
   // 1–20 (giữ nguyên nội dung – đáp án đúng mặc định: A)
   { q:"Growth mindset là gì?", a:"Năng lực phát triển", b:"Năng lực cố định", correct:"A" },
@@ -335,7 +363,6 @@ class Dog {
   constructor(x, y) { this.x = x; this.y = y; this.vy = 0; this.r = 18; }
   flap()   { this.vy = JUMP_VY; }
   update(dt){ this.vy += GRAVITY * dt; this.y += this.vy * dt; }
-
   draw() {
     const angle = Math.max(-0.6, Math.min(0.6, this.vy / 12));
     ctx.save();
@@ -360,7 +387,7 @@ function drawExciter(nowMs){
 
   if (exciterMode === "followTop"){
     const targetX = dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0);
-    exciterCX += (targetX - exciterCX) * 0.18;                 // lerp mượt
+    exciterCX += (targetX - exciterCX) * 0.18;
     exciterCY  = (typeof EXCITER_TOP_Y !== "undefined" ? EXCITER_TOP_Y : 52);
   } else if (exciterMode === "attack"){
     const t  = Math.min(1, (nowMs - exciterT0) / EXCITER_ATTACK_MS);
@@ -369,40 +396,32 @@ function drawExciter(nowMs){
     exciterCY = exciterFrom.y + (exciterTo.y - exciterFrom.y) * p;
 
     if (t >= 1){
-      // Kết thúc cắt cảnh → chuyển sang Game Over chuẩn
       exciterMode = "followTop";
-      gameOver();  // gọi hàm Game Over gốc
+      gameOver();  // gọi hàm Game Over gốc (sẽ mở recap)
     }
   }
 
   ctx.save();
   ctx.globalAlpha = (typeof EXCITER_ALPHA !== "undefined" ? EXCITER_ALPHA : 0.95);
-  ctx.drawImage(exciterImg, exciterCX - eW/2, exciterCY - eH/2, eW, eH);  // MDN drawImage
+  ctx.drawImage(exciterImg, exciterCX - eW/2, exciterCY - eH/2, eW, eH);
   ctx.globalAlpha = 1;
   ctx.restore();
 }
 
-
-
 class Bone {
   constructor(x, y, label, isCorrect){
     this.x = x; this.y = y; this.label = label; this.isCorrect = isCorrect; this.hit = false;
-    this.r = BONE_R * BONE_SCALE; // hitbox khớp kích cỡ hiển thị
+    this.r = BONE_R * BONE_SCALE;
   }
   update(dt){ this.x -= PIPE_SPEED * dt; }
   draw(){
-    const s = BONE_SCALE; // hệ số phóng cho mọi phần
-    // hai đầu xương (cục tròn)
+    const s = BONE_SCALE;
     ctx.fillStyle = "#fffde7";
     ctx.beginPath(); ctx.arc(this.x-10*s, this.y-6*s, 6*s, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(this.x-10*s, this.y+6*s, 6*s, 0, Math.PI*2); ctx.fill();
-    // thân xương
     ctx.fillRect(this.x-10*s, this.y-6*s, 20*s, 12*s);
-    // hai đầu bên phải
     ctx.beginPath(); ctx.arc(this.x+10*s, this.y-6*s, 6*s, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(this.x+10*s, this.y+6*s, 6*s, 0, Math.PI*2); ctx.fill();
-
-    // nhãn A/B
     ctx.fillStyle = "#0b3d91";
     ctx.textAlign = "center";
     ctx.font = `bold ${Math.round(12*s)}px system-ui, Arial`;
@@ -421,8 +440,6 @@ class Heart {
     ctx.fill();
   }
 }
-
-// Vật phẩm trong khoảng trống (emoji)
 class QItem {
   constructor(x,y,type){ this.x=x; this.y=y; this.type=type; this.r=QITEM_R; this.hit=false; }
   update(dt){ this.x -= PIPE_SPEED * dt; }
@@ -431,29 +448,21 @@ class QItem {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const ch = (this.type==="pho") ? "🍜" : "💩";
-    // fillText hỗ trợ vẽ emoji (tuỳ nền tảng). MDN: CanvasRenderingContext2D.fillText()
     ctx.fillText(ch, this.x, this.y);
   }
 }
 
 /* ===================== HELPERS ===================== */
 function updateLivesHUD(){
-   // Vì trần = 10 nên luôn hiển thị được dạng tim lặp
-   livesEl.textContent = "❤".repeat(lives);
+  livesEl.textContent = "❤".repeat(lives);
 }
 function updateQStats(){ qstatsEl.textContent = `Đúng: ${correctCount} | Sai: ${wrongCount}`; }
-
-// escape để an toàn HTML
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g, m => (
     { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]
   ));
 }
-// chuyển \n thành <br> để hiển thị xuống dòng đúng
-function formatMultiline(s){
-  return escapeHTML(s).replace(/\n/g, "<br>");
-}
-
+function formatMultiline(s){ return escapeHTML(s).replace(/\n/g, "<br>"); }
 function showQBanner(html){
   qbanner.style.display = "block";
   qbanner.style.whiteSpace = "normal";
@@ -461,7 +470,6 @@ function showQBanner(html){
   qbanner.innerHTML = html;
 }
 function hideQBanner(){ qbanner.style.display="none"; }
-
 function showToast(t, good=true){
   toastEl.style.display="block";
   toastEl.style.background = good ? "rgba(6,128,67,.9)" : "rgba(183,28,28,.9)";
@@ -476,35 +484,21 @@ function nearestPipeAhead(){
 }
 function canSpawnPipes(nowMs){ return !questionActive && !questionPending && nowMs >= afterQuestionUntil; }
 function randJitter(base, pct){ const d = base * pct; return base + (Math.random()*2-1)*d; }
-
-/* ============ GHÉP BỐI CẢNH VÀO TRƯỜNG q NGAY TỪ ĐẦU ============ */
-function combineContextIntoQ(baseQ, ctxStr){
-  if (!ctxStr) return baseQ;
-  return `Tình huống: ${ctxStr}\nCâu hỏi: ${baseQ}`;
-}
+function combineContextIntoQ(baseQ, ctxStr){ return ctxStr ? `Tình huống: ${ctxStr}\nCâu hỏi: ${baseQ}` : baseQ; }
 
 /* ===================== CORE ===================== */
 function prepareQuestions(){
-  // 1) Gắn bối cảnh trực tiếp vào q trước khi xáo trộn/chọn
   const poolWithCtx = QUESTIONS_POOL.map((q, i) => ({
     ...q,
     q: combineContextIntoQ(q.q, QUESTION_CONTEXTS[i+1] || "")
   }));
-
-  // 2) Xáo trộn
   const pool = [...poolWithCtx];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-
-  // 3) Chọn số lượng dùng trong một ván
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const selected = pool.slice(0, MAX_QUESTIONS);
 
-  // 4) Tạo pattern đảo A/B ~ 1/2
   const flips = Array(selected.length).fill(false).map((_,i)=> i < Math.floor(selected.length/2));
   for (let i = flips.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [flips[i], flips[j]] = [flips[j], flips[i]]; }
 
-  // 5) Áp dụng đảo (q đã kèm bối cảnh, giữ nguyên q)
   QUESTIONS_RT = selected.map((q, idx) => {
     if (!flips[idx]) return { ...q };
     return { q: q.q, a: q.b, b: q.a, correct: (q.correct === "A" ? "B" : "A") };
@@ -527,6 +521,7 @@ function reset(){
   heartSpawnedForStage.fill(false);
   currentStage = 1; heartPendingStage = 1; stageFirstPipeForHeart = null;
 
+  askedQuestions = []; // reset lịch sử câu hỏi
   prepareQuestions();
 
   exciterMode = "followTop";
@@ -546,7 +541,6 @@ function spawnPipe(){
   const p = { x: canvas.width, top, gap: PIPE_GAP, w: PIPE_W, scored:false };
   pipes.push(p);
 
-  // Tim giữa 2 ống: ghép cặp
   if (heartPendingStage && heartPendingStage <= HEARTS_TOTAL && !heartSpawnedForStage[heartPendingStage-1]){
     if (!stageFirstPipeForHeart){
       stageFirstPipeForHeart = p;
@@ -613,14 +607,10 @@ function loseLife(){
     pipes = pipes.filter(p=>p.x + p.w >= dog.x - 10);
     msgEl.textContent = "Cố lên! -1 mạng • Tiếp tục!";
   } else {
-    // HẾT MẠNG → KHỞI ĐỘNG CẮT CẢNH EXCITER LAO XUỐNG
     lives = 0; updateLivesHUD();
-
-    // dọn cảnh để tập trung vào cutscene
     pipes = []; hearts = []; bones = []; qItems = [];
     dog.vy = 0;
 
-    // thiết lập đường bay Exciter
     const nowMs = performance.now();
     exciterFrom = {
       x: exciterCX || (dog.x + (typeof EXCITER_TOP_OFFSET_X !== "undefined" ? EXCITER_TOP_OFFSET_X : 0)),
@@ -628,9 +618,9 @@ function loseLife(){
     };
     exciterTo = { x: dog.x, y: dog.y };
     exciterT0 = nowMs;
-    exciterMode = "attack";  // bật cắt cảnh
-    state = "gameover_attack"; // trạng thái tạm
-    msgEl.textContent = "";   // ẩn thông điệp
+    exciterMode = "attack";
+    state = "gameover_attack";
+    msgEl.textContent = "";
   }
 }
 
@@ -639,8 +629,9 @@ function gameOver(){
   best = Math.max(best, score);
   localStorage.setItem("flappyDogBest", best);
   bestEl.textContent = `Best: ${best}`;
-  msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
   hideQBanner(); setTimerText("");
+  msgEl.textContent = "Mr.Gold đi rồi Ông Giáo ơiiiii😅 — Nhấn Space / Click để chơi lại";
+  showRecapDialog("gameover"); // <— MỞ RECAP KHI THUA
 }
 
 /* ===================== QUESTIONS FLOW ===================== */
@@ -655,7 +646,6 @@ function spawnQuestion(nowMs){
   const pts = questionPointFor(idx);
   questionCountdownUntil = nowMs + QUESTION_LEAD_MS;
 
-  // Banner: Câu + (±điểm) + nội dung Q.q (đã gồm Tình huống + Câu hỏi)
   showQBanner(
     `<div><b>Câu ${idx}/${MAX_QUESTIONS}</b> (±${pts}đ)</div>
      <div style="margin-top:4px">${formatMultiline(Q.q)}</div>
@@ -671,7 +661,9 @@ function spawnQuestion(nowMs){
     new Bone(targetX, yMid + delta, "B", Q.correct === "B"),
   ];
 
-  // Bắt đầu phase Q&A → reset quota & lịch spawn đồ vật (giảm số lượng)
+  // Lưu lịch sử câu đã hỏi để recap
+  askedQuestions.push({ q: Q.q, a: Q.a, b: Q.b, correct: Q.correct });
+
   qPairsSpawnedInPhase = 0;
   nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_Q, QITEM_SPAWN_JITTER);
 
@@ -684,21 +676,19 @@ function finishQuestion(nowMs, isCorrect){
   if (isCorrect){ correctCount += 1; score += pts; showToast(`Chính xác! +${pts}đ 🎉`, true); }
   else { wrongCount += 1; score -= pts; showToast(`Sai! -${pts}đ ❌`, false); loseLife(); }
   scoreEl.textContent = score; updateQStats();
-  
+
   if (questionIndex >= MAX_QUESTIONS){
-    return gameWin();   // kết thúc ngay khi hoàn tất 20 câu
+    return gameWin();
   }
 
   questionActive = false; bones = []; hideQBanner();
-  pipes = []; // dọn sạch cảnh
+  pipes = [];
   afterQuestionUntil = nowMs + AFTER_QUESTION_DELAY_MS;
   postCountdownUntil = afterQuestionUntil;
 
-  // Bắt đầu phase GAP 5s → reset quota & lịch spawn đồ vật
   gapPairsSpawnedInPhase = 0;
   nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_GAP, QITEM_SPAWN_JITTER);
 
-  // Chuẩn bị tim giữa 2 ống ở màn kế
   currentStage = Math.min(questionIndex + 1, HEARTS_TOTAL);
   if (currentStage <= HEARTS_TOTAL){ heartPendingStage = currentStage; stageFirstPipeForHeart = null; }
 }
@@ -719,7 +709,7 @@ function checkBoneCollisions(nowMs){
   }
 }
 
-/* ===================== Q-ITEMS (🍜/🧪 trong 20s & 5s, ĐÃ GIẢM SỐ LƯỢNG) ===================== */
+/* ===================== Q-ITEMS ===================== */
 function itemsPhaseActive(nowMs){ return questionActive || nowMs < afterQuestionUntil; }
 function maybeSpawnQItems(nowMs){
   if (!itemsPhaseActive(nowMs)) return;
@@ -735,7 +725,6 @@ function maybeSpawnQItems(nowMs){
     nextQItemAt = nowMs + randJitter(QITEM_SPAWN_MS_BASE_GAP, QITEM_SPAWN_JITTER);
   }
 
-  // Sinh "cặp" cùng lúc: 1 🍜 + 1 🧪, lệch Y tối thiểu QITEM_Y_GAP
   const y1 = QITEM_MIN_Y + Math.random()*(canvas.height - QITEM_MIN_Y*2);
   let y2 = QITEM_MIN_Y + Math.random()*(canvas.height - QITEM_MIN_Y*2);
   if (Math.abs(y2 - y1) < QITEM_Y_GAP){
@@ -767,7 +756,7 @@ function checkQItemCollisions(){
   qItems = qItems.filter(it => !it.hit);
 }
 
-/* ===================== HEARTS (1 tim/màn, giữa 2 ống) ===================== */
+/* ===================== HEARTS ===================== */
 function updateHearts(dt){
   hearts.forEach(h => h.update(dt));
   while (hearts.length && hearts[0].x + HEART_R < 0) hearts.shift();
@@ -787,26 +776,21 @@ function checkHeartCollisions(){
 /* ===================== RENDER & LOOP ===================== */
 function drawBackground(){
   if (bgReady){
-    // "cover" toàn bộ canvas (giữ tỉ lệ, không méo ảnh)
     const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
     const w = bgImg.width  * scale;
     const h = bgImg.height * scale;
 
-    // cuộn nền sang trái (parallax)
-    bgScrollX -= BG_SCROLL_SPEED * lastDtForBg;           // cùng đơn vị với các thực thể khác
-    let startX = bgScrollX % w;                           // lặp lại theo chiều ngang
+    bgScrollX -= BG_SCROLL_SPEED * lastDtForBg;
+    let startX = bgScrollX % w;
     if (startX > 0) startX -= w;
 
     for (let x = startX; x < canvas.width; x += w){
       ctx.drawImage(bgImg, 0, 0, bgImg.width, bgImg.height, x, 0, w, h);
     }
   } else {
-    // fallback khi ảnh chưa sẵn sàng
     ctx.fillStyle = "#87CEEB";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
-
-  // đường mặt đất (giữ như cũ)
   ctx.fillStyle="#009688";
   ctx.fillRect(0, canvas.height-10, canvas.width, 10);
 }
@@ -839,7 +823,6 @@ function loop(ts){
   } else if (state === "playing"){
     if (canSpawnPipes(nowMs)){ spawnTimer += dtMs; if (spawnTimer > SPAWN_MS){ spawnPipe(); spawnTimer = 0; } }
 
-    // Vật phẩm trong 20s/5s — đã giảm số lượng
     maybeSpawnQItems(nowMs);
 
     dog.update(dt);
@@ -862,8 +845,7 @@ function loop(ts){
     if (collided()) loseLife();
   } else if (state === "gameover"){
     drawPipes(); hearts.forEach(h=>h.draw()); qItems.forEach(it=>it.draw()); bones.forEach(b=>b.draw()); dog.draw();
-  }  else if (state === "victory"){
-    // nền + nhân vật đứng yên
+  } else if (state === "victory"){
     drawPipes();
     hearts.forEach(h=>h.draw());
     qItems.forEach(it=>it.draw());
@@ -926,9 +908,9 @@ reset();
 openIntro();
 requestAnimationFrame(loop);
 
-
 winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
 });
+
 
