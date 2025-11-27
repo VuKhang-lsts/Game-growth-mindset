@@ -104,7 +104,12 @@
 
     <button id="startBtn" class="btn-primary">Chạy ngay thôi, exciter tới</button>
   </dialog>
-
+<audio id="bgm" preload="auto" loop>
+  <source src="assets/nhạc mèo oggy-remix[hưng hack].mp3" type="audio/mpeg" />
+  <!-- fallback tên ASCII nếu server không phục vụ tên có dấu/brackets -->
+  <!-- <source src="assets/nhac-meo-oggy-remix-hung-hack.mp3" type="audio/mpeg" /> -->
+</audio>
+  
   <script type="module" src="game.js"></script>
 
   <dialog id="win" style="max-width:720px;border:none;border-radius:12px;padding:16px 20px;box-shadow:0 10px 40px rgba(0,0,0,.35)">
@@ -137,5 +142,6 @@
 
 </body>
 </html>
+
 
 
