@@ -139,9 +139,37 @@
     </button>
   </form>
 </dialog>
+<!-- COACH / CHATBOT (góc dưới-phải) -->
+<div id="coachDock" aria-live="polite">
+  <img id="coachAvatar" src="assets/ThayKhang.png" alt="Thầy Khang" />
+  <div id="coachBalloon" hidden></div>
 
+  <!-- Panel mở rộng để xem lịch sử & hỏi -->
+  <div id="coachPanel" hidden>
+    <header class="coachHdr">
+      <div class="coachHdr__left">
+        <img src="assets/ThayKhang.png" alt="" />
+        <div>
+          <b>Thầy Khang – Coach AI</b>
+          <div class="coachSub">Giải thích Growth Mindset & giải đáp thắc mắc</div>
+        </div>
+      </div>
+      <button id="coachClose" class="btn-ghost" aria-label="Đóng">✕</button>
+    </header>
+
+    <div id="coachMsgs" role="log" aria-live="polite"></div>
+
+    <form id="coachForm" autocomplete="off">
+      <input id="coachInput" type="text" placeholder="Hỏi thầy… (VD: Vì sao A đúng hơn B?)" />
+      <button id="coachSend" class="btn-primary" type="submit">Gửi</button>
+    </form>
+  </div>
+</div>
+
+  
 </body>
 </html>
+
 
 
 
