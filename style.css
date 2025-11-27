@@ -33,6 +33,16 @@ canvas { border-radius: 16px; background:#b3e5fc; box-shadow: 0 10px 30px rgba(0
 }
 #helpBtn:active { transform: translateX(-50%) translateY(1px); }
 
+/* Nút âm thanh */
+#soundBtn{
+  position: absolute; top: 84px; right: 16px;
+  pointer-events: auto;
+  background: rgba(255,255,255,.85); border: 1px solid #cfe1ff; color:#0b3d91;
+  padding: 6px 10px; border-radius: 999px; font-weight: 700; cursor: pointer;
+}
+#soundBtn:active{ transform: translateY(1px); }
+
+
 /* Banner câu hỏi */
 #qbanner {
   position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
@@ -78,3 +88,4 @@ input, select {
   box-shadow: 0 6px 16px rgba(11,87,208,.25);
 }
 .btn-primary:active { transform: translateY(1px); }
+
