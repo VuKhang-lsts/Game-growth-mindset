@@ -93,6 +93,25 @@ const BG_SCROLL_SPEED = 1.2;
 let bgScrollX = 0;
 ctx.imageSmoothingEnabled = true;
 
+/* ===================== BGM: nhạc nền xuyên suốt ===================== */
+// Đặt file vào thư mục assets, giữ nguyên tên có dấu & ngoặc như thầy yêu cầu
+const MUSIC_FILE = "nhạc mèo oggy-remix[hưng hack].mp3";
+const bgm = new Audio("assets/" + encodeURIComponent(MUSIC_FILE));
+bgm.loop = true;           // lặp vô hạn
+bgm.preload = "auto";
+bgm.volume = 0.45;         // âm lượng nhẹ nhàng
+
+let bgmStarted = false;    // để chỉ play 1 lần sau tương tác đầu
+function startBgmOnce() {
+  if (bgmStarted) return;
+  bgmStarted = true;
+  bgm.play().catch(() => {
+    // nếu trình duyệt chặn (rất hiếm sau gesture), cho phép thử lại ở lần gesture kế tiếp
+    bgmStarted = false;
+  });
+}
+
+
 /* ===================== CONSTANTS ===================== */
 const GRAVITY = 0.45;
 const JUMP_VY = -8.5;
@@ -890,12 +909,35 @@ function isTypingInForm(){
   return tag==="INPUT" || tag==="TEXTAREA" || tag==="SELECT" || a.isContentEditable || (intro?.open && intro.contains(a));
 }
 function startGame(){
-  if (state === "intro"){ if (intro?.open) intro.close(); msgEl.textContent=""; state="playing"; dog.flap(); return; }
-  if (state === "ready"){ msgEl.textContent=""; state="playing"; dog.flap(); }
-  else if (state === "paused"){ if (intro?.open) intro.close(); state = resumeState || "playing"; resumeState=null; }
-  else if (state === "gameover"){ reset(); state="ready"; }
-  else if (state === "playing"){ dog.flap(); }
+  if (state === "intro"){
+    if (intro?.open) intro.close();
+    msgEl.textContent="";
+    state="playing";
+    startBgmOnce();   // ⬅️ phát nhạc ngay khi bắt đầu chơi
+    dog.flap();
+    return;
+  }
+  if (state === "ready"){
+    msgEl.textContent="";
+    state="playing";
+    startBgmOnce();   // ⬅️ đảm bảo nhạc chạy khi bắt đầu
+    dog.flap();
+  }
+  else if (state === "paused"){
+    if (intro?.open) intro.close();
+    state = resumeState || "playing";
+    resumeState=null;
+    startBgmOnce();   // ⬅️ tiếp tục đảm bảo nhạc khi resume
+  }
+  else if (state === "gameover"){
+    reset(); state="ready";
+    // Nhạc vẫn chạy xuyên suốt, không dừng.
+  }
+  else if (state === "playing"){
+    dog.flap(); // chỉ vỗ cánh, không ảnh hưởng nhạc
+  }
 }
+
 window.addEventListener("keydown",(e)=>{
   if (isTypingInForm()) return;
   if (e.code==="Space" || e.key===" "){ e.preventDefault(); startGame(); }
@@ -935,6 +977,7 @@ winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
 });
+
 
 
 
