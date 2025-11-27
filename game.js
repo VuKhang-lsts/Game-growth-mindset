@@ -293,7 +293,7 @@ function showRecapDialog(outcome){
     if (h2)  h2.textContent = "🎉 CHÚC MỪNG!";
     if (sub) sub.innerHTML = 'Bạn đã thoát khỏi <b>anh Exciter</b> và hoàn thành 20 câu hỏi!';
   } else {
-    if (h2)  h2.textContent = "💡 BÀI HỌC SAU THẤT BẠI";
+    if (h2)  h2.textContent = "MR.GOLD ĐI RỒI ÔNG GIÁO ƠIIIII";
     if (sub) sub.innerHTML = 'Bạn đã bị <b>anh Exciter</b> bắt 🤣 — nhưng <b>thất bại = dữ liệu học</b>. Cùng tổng kết rồi chơi lại nhé!';
   }
 
@@ -935,6 +935,7 @@ winRestart?.addEventListener("click", ()=>{
   if (winDlg?.open) winDlg.close();
   reset(); state = "ready";
 });
+
 
 
 
